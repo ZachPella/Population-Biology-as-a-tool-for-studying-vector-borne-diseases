@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import io  
 
 # Set page configuration
 st.set_page_config(page_title="Reed-Frost Epidemic Model", layout="wide")
@@ -52,6 +53,14 @@ def reed_frost_model(p, c0, s0, b=0, i=0, d=0, m=0, time_periods=100):
     susceptible[0] = s0
     immune[0] = 0
     total[0] = c0 + s0
+
+    # Helper function for downloading plots
+def get_image_download_link(fig):
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=300)
+    buf.seek(0)
+    return buf
+
     
     # Run the model
     for t in range(1, time_periods):
