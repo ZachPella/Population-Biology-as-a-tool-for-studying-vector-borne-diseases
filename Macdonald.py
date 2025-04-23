@@ -78,11 +78,17 @@ def calculate_vectorial_capacity(m, a, b, p, n):
     Returns:
     - C: Vectorial capacity
     """
+    # Prevent domain errors with invalid parameters
     if p <= 0 or p >= 1:
         return 0
     
-    # Macdonald's formula: C = ma²bp^n/-ln(p)
-    return (m * (a**2) * b * (p**n)) / (-math.log(p))
+    # Handle other potential errors
+    try:
+        # Macdonald's formula: C = ma²bp^n/-ln(p)
+        return (m * (a**2) * b * (p**n)) / (-math.log(p))
+    except Exception:
+        # Return 0 if any calculation error occurs
+        return 0
 
 # Calculate vectorial capacity with current parameters
 vectorial_capacity = calculate_vectorial_capacity(
@@ -342,13 +348,19 @@ with tab2:
             threshold_found = True
             break
     
+    # Format the threshold preference as string to avoid f-string issues
+    if threshold_found:
+        threshold_text = f"{threshold_preference:.2f}"
+    else:
+        threshold_text = "not reached with these parameters"
+        
     st.write(f"""
     Host preference is a crucial factor in vector-borne disease transmission. It determines how frequently vectors feed on humans versus other animals.
     
     **Anthropophilic vectors** (those that prefer human hosts) generally have higher vectorial capacity for human diseases. 
     **Zoophilic vectors** (those that prefer animal hosts) may serve as less efficient vectors for human pathogens.
     
-    Based on the current parameters, the minimum host preference index needed for sustained transmission (R₀>1) is approximately {threshold_preference:.2f if threshold_found else "not reached with these parameters"}.
+    Based on the current parameters, the minimum host preference index needed for sustained transmission (R₀>1) is approximately {threshold_text}.
     
     **Implications for control:**
     - Zooprophylaxis: Using animal hosts as "bait" to divert vectors from humans
@@ -423,23 +435,27 @@ with tab3:
         # Calculate vectorial capacity for each combination
         for i in range(len(y_range)):
             for j in range(len(x_range)):
-                # Get parameter values
-                params = {
-                    "m": vector_host_ratio,
-                    "a": biting_rate,
-                    "b": vector_competence,
-                    "p": daily_survival,
-                    "n": extrinsic_incubation
-                }
-                
-                # Update with grid values
-                params[x_name] = X[i, j]
-                params[y_name] = Y[i, j]
-                
-                # Calculate VC
-                Z[i, j] = calculate_vectorial_capacity(
-                    params["m"], params["a"], params["b"], params["p"], params["n"]
-                )
+                try:
+                    # Get parameter values
+                    params = {
+                        "m": vector_host_ratio,
+                        "a": biting_rate,
+                        "b": vector_competence,
+                        "p": daily_survival,
+                        "n": extrinsic_incubation
+                    }
+                    
+                    # Update with grid values
+                    params[x_name] = X[i, j]
+                    params[y_name] = Y[i, j]
+                    
+                    # Calculate VC
+                    Z[i, j] = calculate_vectorial_capacity(
+                        params["m"], params["a"], params["b"], params["p"], params["n"]
+                    )
+                except Exception:
+                    # Handle any errors during calculation
+                    Z[i, j] = 0
         
         # Create heatmap
         fig3, ax3 = plt.subplots(figsize=(10, 8))
@@ -538,35 +554,44 @@ with tab4:
     # Calculate elasticity (proportional sensitivity) for each parameter
     def calculate_elasticity(param_name, base_value, delta=0.01):
         """Calculate elasticity (proportional sensitivity) for a parameter"""
-        params = {
-            "m": vector_host_ratio,
-            "a": biting_rate,
-            "b": vector_competence,
-            "p": daily_survival,
-            "n": extrinsic_incubation
-        }
-        
-        # Base VC value
-        base_vc = calculate_vectorial_capacity(
-            params["m"], params["a"], params["b"], params["p"], params["n"]
-        )
-        
-        # Perturbed value (increase by delta %)
-        params[param_name] *= (1 + delta)
-        
-        # New VC value
-        new_vc = calculate_vectorial_capacity(
-            params["m"], params["a"], params["b"], params["p"], params["n"]
-        )
-        
-        # Calculate elasticity
-        if base_vc == 0:
+        try:
+            params = {
+                "m": vector_host_ratio,
+                "a": biting_rate,
+                "b": vector_competence,
+                "p": daily_survival,
+                "n": extrinsic_incubation
+            }
+            
+            # Base VC value
+            base_vc = calculate_vectorial_capacity(
+                params["m"], params["a"], params["b"], params["p"], params["n"]
+            )
+            
+            # Handle division by zero
+            if base_vc == 0:
+                return 0
+            
+            # Perturbed value (increase by delta %)
+            # Make a copy to avoid modifying original values
+            perturbed_params = params.copy()
+            perturbed_params[param_name] *= (1 + delta)
+            
+            # New VC value
+            new_vc = calculate_vectorial_capacity(
+                perturbed_params["m"], perturbed_params["a"], 
+                perturbed_params["b"], perturbed_params["p"], 
+                perturbed_params["n"]
+            )
+            
+            # Calculate elasticity
+            percent_change_vc = (new_vc - base_vc) / base_vc
+            elasticity = percent_change_vc / delta
+            
+            return elasticity
+        except Exception:
+            # Return 0 if any calculation error occurs
             return 0
-        
-        percent_change_vc = (new_vc - base_vc) / base_vc
-        elasticity = percent_change_vc / delta
-        
-        return elasticity
     
     # Calculate elasticities
     elasticities = {
