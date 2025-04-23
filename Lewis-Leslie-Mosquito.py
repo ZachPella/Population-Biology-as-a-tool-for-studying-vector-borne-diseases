@@ -3,8 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import altair as alt
-from io import StringIO
-import base64
+import io
 
 # Set page configuration
 st.set_page_config(page_title="Leslie Matrix Population Model", layout="wide")
@@ -178,15 +177,13 @@ with col3:
 with col4:
     st.metric("Total Final Population", f"{total_population[-1]:.0f}")
 
-# Download function for plots
-def get_image_download_link(fig, filename="plot.png"):
-    """Generate a download link for a matplotlib figure"""
-    buf = StringIO()
+# Helper function to convert figure to downloadable data
+def fig_to_bytes(fig):
+    """Convert a matplotlib figure to bytes for downloading"""
+    buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
     buf.seek(0)
-    img_data = base64.b64encode(buf.getvalue()).decode()
-    href = f'<a href="data:image/png;base64,{img_data}" download="{filename}">Download Plot</a>'
-    return href
+    return buf
 
 # Create tabs for different views
 tab1, tab2, tab3, tab4 = st.tabs(["Population Trends", "Stage Distribution", "Age Structure", "Data Table"])
@@ -213,7 +210,14 @@ with tab1:
         st.info("Note: Using logarithmic scale for y-axis due to large population numbers")
     
     st.pyplot(fig1)
-    st.markdown(get_image_download_link(fig1, "population_trends.png"), unsafe_allow_html=True)
+    
+    # Streamlit download button
+    st.download_button(
+        label="Download Population Trends Plot",
+        data=fig_to_bytes(fig1),
+        file_name="population_trends.png",
+        mime="image/png"
+    )
     
     # Population growth rate plot
     growth_rates = np.zeros(num_days)
@@ -229,7 +233,13 @@ with tab1:
     ax2.grid(True, alpha=0.3)
     
     st.pyplot(fig2)
-    st.markdown(get_image_download_link(fig2, "growth_rate.png"), unsafe_allow_html=True)
+    
+    st.download_button(
+        label="Download Growth Rate Plot",
+        data=fig_to_bytes(fig2),
+        file_name="growth_rate.png",
+        mime="image/png"
+    )
 
 with tab2:
     st.header("Stage Distribution Analysis")
@@ -290,7 +300,13 @@ with tab2:
             
         ax3.set_title(f'Population Composition on Day {num_days}', fontsize=14)
         st.pyplot(fig3)
-        st.markdown(get_image_download_link(fig3, "population_composition.png"), unsafe_allow_html=True)
+        
+        st.download_button(
+            label="Download Population Composition Plot",
+            data=fig_to_bytes(fig3),
+            file_name="population_composition.png",
+            mime="image/png"
+        )
     else:
         st.warning("No individuals found in the final day to create pie chart.")
 
@@ -358,7 +374,13 @@ with tab3:
     
     plt.tight_layout()
     st.pyplot(fig4)
-    st.markdown(get_image_download_link(fig4, "age_structure.png"), unsafe_allow_html=True)
+    
+    st.download_button(
+        label="Download Age Structure Plot",
+        data=fig_to_bytes(fig4),
+        file_name="age_structure.png",
+        mime="image/png"
+    )
     
     # Create a cohort survival curve
     st.subheader("Cohort Survival Analysis")
@@ -417,7 +439,13 @@ with tab3:
                 ax5.axvline(x=day, color='k', linestyle='--', alpha=0.5)
         
         st.pyplot(fig5)
-        st.markdown(get_image_download_link(fig5, "cohort_survival.png"), unsafe_allow_html=True)
+        
+        st.download_button(
+            label="Download Cohort Survival Plot",
+            data=fig_to_bytes(fig5),
+            file_name="cohort_survival.png",
+            mime="image/png"
+        )
     else:
         st.warning(f"No eggs were laid on day {cohort_day}. Please select a different day.")
 
@@ -498,7 +526,13 @@ with tab4:
     ax6.set_ylabel('Next Age (To)', fontsize=12)
     
     st.pyplot(fig6)
-    st.markdown(get_image_download_link(fig6, "leslie_matrix.png"), unsafe_allow_html=True)
+    
+    st.download_button(
+        label="Download Leslie Matrix Plot",
+        data=fig_to_bytes(fig6),
+        file_name="leslie_matrix.png",
+        mime="image/png"
+    )
     
     # Show the detailed data table
     st.subheader("Population Data by Day")
