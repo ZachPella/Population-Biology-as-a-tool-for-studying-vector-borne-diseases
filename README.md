@@ -1,2 +1,1 @@
-# Reed-Frost-model
-Reed-Frost interactive tool
+Interactive Reed-Frost and Lewis-Leslie models
