@@ -6,20 +6,20 @@ import altair as alt
 import io
 
 # Set page configuration
-st.set_page_config(page_title="Leslie Matrix Population Model for Mosquitos", layout="wide")
+st.set_page_config(page_title="Leslie Matrix Population Model for Mosquitoes", layout="wide")
 
 # Display title and description
-st.title("Leslie Matrix Population Model Simulator")
+st.title("Leslie Matrix Population Model for Mosquitoes")
 st.markdown("""
-This interactive application simulates population dynamics using a Leslie Matrix model.
-The model tracks the growth of a population through multiple life stages (eggs, larvae, adults).
+This interactive application simulates mosquito population dynamics using a Leslie Matrix model.
+Adjust the parameters using the sliders and see how they affect the population growth.
 
 **Parameters:**
 - **Egg survival rate**: Daily survival probability for eggs
-- **Larval survival rate**: Daily survival probability for larvae
-- **Adult survival rate**: Daily survival probability for adults
-- **Initial population**: Starting number of individuals (adults)
-- **Fecundity values**: Number of eggs produced at different adult ages
+- **Larval survival rate**: Daily survival probability for larvae (aquatic stage)
+- **Adult survival rate**: Daily survival probability for adult mosquitoes
+- **Initial population**: Starting number of individuals
+- **Fecundity values**: Number of eggs produced at different adult ages after blood meals
 """)
 
 # Create sidebar with parameters
@@ -31,21 +31,20 @@ larval_survival = st.sidebar.slider("Larval daily survival rate", 0.0, 1.0, 0.9,
 adult_survival = st.sidebar.slider("Adult daily survival rate", 0.0, 1.0, 0.8, 0.01)
 
 # Initial population
-initial_population = st.sidebar.number_input("Initial population (adults at day 8)", 1, 10000, 1000)
+initial_population = st.sidebar.number_input("Initial population (adults at day 8)", 1, 10000, 1000, help="Starting population of adult mosquitoes")
 
-# Fecundity values
-fecundity_1 = st.sidebar.number_input("Fecundity at day 12", 0, 500, 120)
-fecundity_2 = st.sidebar.number_input("Fecundity at day 17", 0, 500, 100)
-fecundity_3 = st.sidebar.number_input("Fecundity at day 22", 0, 500, 80)
-fecundity_4 = st.sidebar.number_input("Fecundity at day 27", 0, 500, 60)
+# Fecundity values (based on blood meals in female mosquitoes)
+fecundity_1 = st.sidebar.number_input("Fecundity after first blood meal (day 12)", 0, 500, 120, help="Number of eggs produced after first blood meal")
+fecundity_2 = st.sidebar.number_input("Fecundity after second blood meal (day 17)", 0, 500, 100, help="Number of eggs produced after second blood meal")
+fecundity_3 = st.sidebar.number_input("Fecundity after third blood meal (day 22)", 0, 500, 80, help="Number of eggs produced after third blood meal")
+fecundity_4 = st.sidebar.number_input("Fecundity after fourth blood meal (day 27)", 0, 500, 60, help="Number of eggs produced after fourth blood meal")
 
 # Time periods to simulate
-num_days = st.sidebar.slider("Number of days to simulate", 28, 200, 60)
+num_days = st.sidebar.slider("Number of days to simulate", 28, 200, 60, help="Length of simulation in days")
 
-# Setup for egg developmental stage
-egg_stage_duration = st.sidebar.slider("Egg stage duration (days)", 1, 15, 7)
-larval_stage_duration = st.sidebar.slider("Larval stage duration (days)", 1, 15, 4)
-# Adult stage starts after egg and larval stages
+# Developmental stages for mosquitoes
+egg_stage_duration = st.sidebar.slider("Egg stage duration (days)", 1, 15, 2, help="Duration of egg development before hatching")
+larval_stage_duration = st.sidebar.slider("Larval stage duration (days)", 1, 30, 10, help="Duration of larval and pupal stages before emerging as adults")
 
 # Create a helper function to detect development stages
 def get_stage(day):
@@ -60,14 +59,14 @@ def run_leslie_model(egg_survival, larval_survival, adult_survival,
                     initial_pop, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
                     num_days, egg_stage_duration, larval_stage_duration):
     """
-    Run the Leslie Matrix population model simulation with stage-specific transitions
+    Run the Leslie Matrix population model simulation for mosquitoes
     
     Parameters:
     - egg_survival: Daily survival rate for eggs
     - larval_survival: Daily survival rate for larvae
     - adult_survival: Daily survival rate for adults
     - initial_pop: Initial adult population
-    - fecundity_1-4: Number of eggs laid at each oviposition event
+    - fecundity_1-4: Number of eggs laid after each blood meal
     - num_days: Number of days to simulate
     - egg_stage_duration: Number of days in egg stage
     - larval_stage_duration: Number of days in larval stage
@@ -91,18 +90,19 @@ def run_leslie_model(egg_survival, larval_survival, adult_survival,
             leslie_matrix[i+1, i] = adult_survival
     
     # Set fecundity values (first row)
-    # Reproduction occurs on specific adult days (counted from adult emergence)
+    # Reproduction occurs on specific adult days (after blood meals)
     reproduction_days = [
-        adult_stage_start + 12 - adult_stage_start,  # Day 12 adjusted for adult stage start
-        adult_stage_start + 17 - adult_stage_start,  # Day 17 adjusted
-        adult_stage_start + 22 - adult_stage_start,  # Day 22 adjusted
-        adult_stage_start + 27 - adult_stage_start   # Day 27 adjusted
+        12,  # First blood meal
+        17,  # Second blood meal
+        22,  # Third blood meal
+        27   # Fourth blood meal
     ]
     
     # Ensure indices are valid
-    for i, day in enumerate([12, 17, 22, 27]):
+    for i, day in enumerate(reproduction_days):
         if adult_stage_start + (day - adult_stage_start) < total_stages:
-            leslie_matrix[0, adult_stage_start + (day - adult_stage_start)] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
+            if day >= adult_stage_start:
+                leslie_matrix[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
     
     # Initialize population vector
     population = np.zeros(total_stages)
@@ -200,11 +200,11 @@ with tab1:
     
     ax1.set_xlabel('Day', fontsize=12)
     ax1.set_ylabel('Number of Individuals', fontsize=12)
-    ax1.set_title('Population Growth by Life Stage', fontsize=14)
+    ax1.set_title('Mosquito Population Growth by Life Stage', fontsize=14)
     ax1.legend(fontsize=10)
     ax1.grid(True, alpha=0.3)
     
-    # Use log scale for y-axis if population gets very large
+    # Use log scale if the population gets very large
     if max(total_population) > 10000:
         ax1.set_yscale('log')
         st.info("Note: Using logarithmic scale for y-axis due to large population numbers")
@@ -215,16 +215,16 @@ with tab1:
     st.download_button(
         label="Download Population Trends Plot",
         data=fig_to_bytes(fig1),
-        file_name="population_trends.png",
+        file_name="mosquito_population_trends.png",
         mime="image/png"
     )
     
     # Population growth rate plot
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
     growth_rates = np.zeros(num_days)
     for i in range(1, num_days):
         growth_rates[i] = (total_population[i] / total_population[i-1] - 1) * 100 if total_population[i-1] > 0 else 0
     
-    fig2, ax2 = plt.subplots(figsize=(10, 4))
     ax2.plot(days[1:], growth_rates[1:], color='#2ca02c', linewidth=2)
     ax2.axhline(y=0, color='r', linestyle='--', alpha=0.5)
     ax2.set_xlabel('Day', fontsize=12)
@@ -237,7 +237,7 @@ with tab1:
     st.download_button(
         label="Download Growth Rate Plot",
         data=fig_to_bytes(fig2),
-        file_name="growth_rate.png",
+        file_name="mosquito_growth_rate.png",
         mime="image/png"
     )
 
@@ -304,7 +304,7 @@ with tab2:
         st.download_button(
             label="Download Population Composition Plot",
             data=fig_to_bytes(fig3),
-            file_name="population_composition.png",
+            file_name="mosquito_population_composition.png",
             mime="image/png"
         )
     else:
@@ -313,7 +313,7 @@ with tab2:
 with tab3:
     st.header("Age Structure Analysis")
     
-    # Fixed list of days to show - this replaces the problematic select_slider
+    # Fixed list of days to show
     # Calculate some reasonable days to show (beginning, 1/3, 2/3, end)
     day_options = [1, max(1, int(num_days/3)), max(1, int(2*num_days/3)), num_days]
     
@@ -355,7 +355,7 @@ with tab3:
     
     # Highlight reproduction days
     for age in range(total_stages):
-        if age in [adult_stage_start + offset for offset in [0, 5, 10, 15]]:
+        if age in [12, 17, 22, 27]:  # Blood meal days
             bar_colors[age] = '#e74c3c'  # Highlight reproduction days
     
     # Plot horizontal bar chart
@@ -392,7 +392,7 @@ with tab3:
     st.download_button(
         label="Download Age Structure Plot",
         data=fig_to_bytes(fig4),
-        file_name=f"age_structure_day_{selected_day}.png",
+        file_name=f"mosquito_age_structure_day_{selected_day}.png",
         mime="image/png"
     )
     
@@ -458,7 +458,7 @@ with tab3:
         st.download_button(
             label="Download Cohort Survival Plot",
             data=fig_to_bytes(fig5),
-            file_name="cohort_survival.png",
+            file_name="mosquito_cohort_survival.png",
             mime="image/png"
         )
     else:
@@ -482,16 +482,9 @@ with tab4:
             leslie_matrix[i+1, i] = adult_survival
     
     # Set fecundity values
-    reproduction_days = [
-        adult_stage_start + 12 - adult_stage_start,
-        adult_stage_start + 17 - adult_stage_start,
-        adult_stage_start + 22 - adult_stage_start,
-        adult_stage_start + 27 - adult_stage_start
-    ]
-    
     for i, day in enumerate([12, 17, 22, 27]):
-        if adult_stage_start + (day - adult_stage_start) < total_stages:
-            leslie_matrix[0, adult_stage_start + (day - adult_stage_start)] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
+        if day < total_stages:
+            leslie_matrix[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
     
     # Create a heatmap of the Leslie matrix
     fig6, ax6 = plt.subplots(figsize=(10, 8))
@@ -545,7 +538,7 @@ with tab4:
     st.download_button(
         label="Download Leslie Matrix Plot",
         data=fig_to_bytes(fig6),
-        file_name="leslie_matrix.png",
+        file_name="mosquito_leslie_matrix.png",
         mime="image/png"
     )
     
@@ -566,7 +559,7 @@ with tab4:
         st.download_button(
             label="Download Summary Data as CSV",
             data=csv,
-            file_name="leslie_matrix_summary.csv",
+            file_name="mosquito_leslie_matrix_summary.csv",
             mime="text/csv"
         )
     else:
@@ -594,40 +587,46 @@ with tab4:
         st.download_button(
             label="Download Detailed Data as CSV",
             data=detailed_csv,
-            file_name="leslie_matrix_detailed.csv",
+            file_name="mosquito_leslie_matrix_detailed.csv",
             mime="text/csv"
         )
 
-# About the Leslie Matrix model
-st.header("About the Leslie Matrix Model")
+# About the Leslie Matrix model for mosquitoes
+st.header("About the Leslie Matrix Model for Mosquitoes")
 st.markdown("""
-The Leslie matrix model is a discrete-time, age-structured population model used extensively in ecology and demography. It was developed by P. H. Leslie in the 1940s to model population dynamics with age-specific fertility and survival rates.
+The Leslie matrix model is a powerful tool for modeling age-structured populations, particularly useful for species like mosquitoes that have distinct life stages and age-specific reproduction patterns.
 
-### How the Model Works:
-1. **Age Structure**: The population is divided into discrete age classes
-2. **Leslie Matrix**: The core of the model is a square matrix with:
-   - Fecundity values in the first row (reproduction)
-   - Survival probabilities in the subdiagonal (aging and survival)
-3. **Time Steps**: At each time step, the matrix is multiplied by the current population vector to produce the next generation
+### Mosquito Life Cycle:
+1. **Egg Stage**: Mosquito eggs are typically laid on water surfaces or in damp areas near water
+2. **Larval Stage**: Aquatic larvae (including the pupal phase) that develop in water bodies
+3. **Adult Stage**: Flying insects, with females requiring blood meals for egg development
 
-### Key Components:
+### Model Components:
 - **Stage-specific survival rates**: Different survival probabilities for eggs, larvae, and adults
-- **Age-specific fecundity**: Reproduction occurs at specific adult ages (days 12, 17, 22, 27)
+- **Age-specific fecundity**: Female mosquitoes produce eggs after blood meals at specific points in their adult life
 - **Initial population**: Starting population in a particular age class
 
 ### Applications:
-- Predicting population dynamics for species conservation
-- Pest management in agriculture
-- Understanding disease vectors (insects carrying diseases)
-- Sustainable harvest planning for managed populations
+- Vector control planning for disease prevention (malaria, dengue, Zika, etc.)
+- Understanding mosquito population dynamics in different environments and seasons
+- Testing the effectiveness of different control strategies (larvicides, insecticides, biological control)
+- Predicting disease transmission potential in various scenarios
 
-This implementation focuses on insect population dynamics with three distinct life stages (eggs, larvae, adults) and allows for exploring how changes in survival rates and fecundity affect long-term population trends.
+This model can be particularly valuable for:
+- Public health initiatives targeting vector-borne diseases
+- Environmental management of breeding sites
+- Climate change impact assessment on mosquito populations
+- Integrated Vector Management (IVM) programs
+
+By adjusting parameters like survival rates and fecundity, you can simulate different environmental conditions or control measures to understand their impact on mosquito populations and potential disease transmission.
 """)
 
 st.info("""
 **Tips for using this app:**
 - Try changing the survival rates to see how they affect population growth
-- Compare the effects of changing fecundity at different adult ages
+- Compare the effects of changing fecundity after different blood meals 
 - Observe how the age structure changes over time
 - Track a cohort's survival through the population lifecycle
+- Experiment with different intervention strategies by reducing survival at specific life stages
+- Simulate seasonal effects by adjusting survival rates for different time periods
 """)
