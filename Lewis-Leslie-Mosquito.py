@@ -313,78 +313,93 @@ with tab2:
 with tab3:
     st.header("Age Structure Analysis")
     
-    # Select days to visualize
-    days_to_show = st.select_slider(
-        "Select days to view age structure:",
-        options=list(range(1, num_days+1)), 
-        value=[1, int(num_days/3), int(2*num_days/3), num_days]
+    # Fixed list of days to show - this replaces the problematic select_slider
+    # Calculate some reasonable days to show (beginning, 1/3, 2/3, end)
+    day_options = [1, max(1, int(num_days/3)), max(1, int(2*num_days/3)), num_days]
+    
+    # Let user select which day to focus on using radio buttons
+    selected_day = st.radio(
+        "Select a day to view age structure:",
+        day_options,
+        format_func=lambda x: f"Day {x}"
     )
     
-    fig4, axs = plt.subplots(len(days_to_show), 1, figsize=(10, 4*len(days_to_show)))
-    if len(days_to_show) == 1:
-        axs = [axs]
+    # Create age structure plot for the selected day
+    fig4, ax4 = plt.subplots(figsize=(10, 8))
     
-    for i, day in enumerate(days_to_show):
-        day_idx = day - 1  # Convert to 0-based index
-        age_distribution = results[day_idx, :]
-        
-        # Create labels for each age class
-        age_labels = []
-        for age in range(total_stages):
-            if age < egg_stage_duration:
-                age_labels.append(f"Egg {age+1}")
-            elif age < egg_stage_duration + larval_stage_duration:
-                age_labels.append(f"Larva {age+1-egg_stage_duration}")
-            else:
-                age_labels.append(f"Adult {age+1-(egg_stage_duration+larval_stage_duration)}")
-        
-        # Color bars by stage
-        bar_colors = []
-        for age in range(total_stages):
-            if age < egg_stage_duration:
-                bar_colors.append('#f7d060')  # Egg color
-            elif age < egg_stage_duration + larval_stage_duration:
-                bar_colors.append('#ff6e40')  # Larva color
-            else:
-                bar_colors.append('#5d5d5d')  # Adult color
-        
-        # Highlight reproduction days
-        for age in range(total_stages):
-            if age in [adult_stage_start + offset for offset in [0, 5, 10, 15]]:
-                bar_colors[age] = '#e74c3c'  # Highlight reproduction days
-        
-        # Reverse order for pyramid-like structure
-        axs[i].barh(range(total_stages), age_distribution, color=bar_colors)
-        axs[i].set_yticks(range(total_stages))
-        axs[i].set_yticklabels(age_labels)
-        axs[i].set_xlabel('Number of Individuals')
-        axs[i].set_title(f'Age Structure on Day {day}')
-        
-        # Add stage dividers
-        axs[i].axhline(y=egg_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
-        axs[i].axhline(y=egg_stage_duration + larval_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
-        
-        # Add stage labels
-        axs[i].text(-0.05, egg_stage_duration/2, 'EGGS', rotation=90, 
-                   transform=axs[i].get_yaxis_transform(), va='center', ha='right', fontweight='bold')
-        axs[i].text(-0.05, egg_stage_duration + larval_stage_duration/2, 'LARVAE', rotation=90, 
-                   transform=axs[i].get_yaxis_transform(), va='center', ha='right', fontweight='bold')
-        axs[i].text(-0.05, egg_stage_duration + larval_stage_duration + 5, 'ADULTS', rotation=90, 
-                   transform=axs[i].get_yaxis_transform(), va='center', ha='right', fontweight='bold')
+    # Get age distribution for the selected day
+    day_idx = selected_day - 1  # Convert to 0-based index
+    age_distribution = results[day_idx, :]
     
-    plt.tight_layout()
+    # Create labels for each age class
+    age_labels = []
+    for age in range(total_stages):
+        if age < egg_stage_duration:
+            age_labels.append(f"Egg {age+1}")
+        elif age < egg_stage_duration + larval_stage_duration:
+            age_labels.append(f"Larva {age+1-egg_stage_duration}")
+        else:
+            age_labels.append(f"Adult {age+1-(egg_stage_duration+larval_stage_duration)}")
+    
+    # Color bars by stage
+    bar_colors = []
+    for age in range(total_stages):
+        if age < egg_stage_duration:
+            bar_colors.append('#f7d060')  # Egg color
+        elif age < egg_stage_duration + larval_stage_duration:
+            bar_colors.append('#ff6e40')  # Larva color
+        else:
+            bar_colors.append('#5d5d5d')  # Adult color
+    
+    adult_stage_start = egg_stage_duration + larval_stage_duration
+    
+    # Highlight reproduction days
+    for age in range(total_stages):
+        if age in [adult_stage_start + offset for offset in [0, 5, 10, 15]]:
+            bar_colors[age] = '#e74c3c'  # Highlight reproduction days
+    
+    # Plot horizontal bar chart
+    ax4.barh(range(total_stages), age_distribution, color=bar_colors)
+    
+    # Set y-ticks (limit to avoid overcrowding)
+    max_labels = 25
+    if total_stages > max_labels:
+        step = max(1, total_stages // max_labels)
+        y_ticks = range(0, total_stages, step)
+        ax4.set_yticks(y_ticks)
+        ax4.set_yticklabels([age_labels[i] for i in y_ticks])
+    else:
+        ax4.set_yticks(range(total_stages))
+        ax4.set_yticklabels(age_labels)
+    
+    ax4.set_xlabel('Number of Individuals')
+    ax4.set_title(f'Age Structure on Day {selected_day}')
+    
+    # Add stage dividers
+    ax4.axhline(y=egg_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
+    ax4.axhline(y=egg_stage_duration + larval_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
+    
+    # Add stage labels
+    ax4.text(-0.05, egg_stage_duration/2, 'EGGS', rotation=90, 
+             transform=ax4.get_yaxis_transform(), va='center', ha='right', fontweight='bold')
+    ax4.text(-0.05, egg_stage_duration + larval_stage_duration/2, 'LARVAE', rotation=90, 
+             transform=ax4.get_yaxis_transform(), va='center', ha='right', fontweight='bold')
+    ax4.text(-0.05, egg_stage_duration + larval_stage_duration + 5, 'ADULTS', rotation=90, 
+             transform=ax4.get_yaxis_transform(), va='center', ha='right', fontweight='bold')
+    
     st.pyplot(fig4)
     
     st.download_button(
         label="Download Age Structure Plot",
         data=fig_to_bytes(fig4),
-        file_name="age_structure.png",
+        file_name=f"age_structure_day_{selected_day}.png",
         mime="image/png"
     )
     
     # Create a cohort survival curve
     st.subheader("Cohort Survival Analysis")
     
+    # Use simpler slider for cohort day selection
     cohort_day = st.slider("Select day to start tracking a cohort:", 1, max(1, num_days-10), 1)
     cohort_day_idx = cohort_day - 1
     
