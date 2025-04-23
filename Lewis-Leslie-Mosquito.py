@@ -6,7 +6,7 @@ import altair as alt
 import io
 
 # Set page configuration
-st.set_page_config(page_title="Leslie Matrix Population Model", layout="wide")
+st.set_page_config(page_title="Leslie Matrix Population Model for Mosquitos", layout="wide")
 
 # Display title and description
 st.title("Leslie Matrix Population Model Simulator")
