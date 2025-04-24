@@ -7,8 +7,8 @@ import io
 
 def run():
     # Display title and description
-    st.title("🪳 Leslie Matrix Population Dynamics for Cockroaches")
-    st.markdown("####📈 Age-structured growth projection system")
+    st.title("🪳 Leslie Matrix Population Growth for Cockroaches")
+    st.markdown("####📈 A discrete, age-structured model of population growth")
     st.markdown("""
     This interactive application simulates cockroach population dynamics using a Leslie Matrix model.
     Adjust the parameters using the sliders and see how they affect the population growth.
