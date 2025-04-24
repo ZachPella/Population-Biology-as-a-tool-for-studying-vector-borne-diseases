@@ -6,9 +6,6 @@ import altair as alt
 import io
 
 def run():
-    # Set page configuration
-    st.set_page_config(page_title="Cockroach Population Model", layout="wide")
-    
     # Display title and description
     st.title("Leslie Matrix Population Model for Cockroaches")
     st.markdown("""
