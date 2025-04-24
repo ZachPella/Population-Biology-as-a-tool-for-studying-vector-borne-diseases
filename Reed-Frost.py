@@ -122,26 +122,26 @@ time_periods = st.sidebar.slider("Number of time periods", 10, 200, 50, 10)
 # Run the model with the current parameters
 results = reed_frost_model(p, c0, s0, b, i, d, m, time_periods)
 
+# Display summary statistics ABOVE the tabs
+st.header("Summary Statistics")
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric("Peak Cases", f"{results['Cases'].max():.2f}")
+with col2:
+    st.metric("Time of Peak", f"{results['Cases'].idxmax()} generations")
+with col3:
+    st.metric("Attack Rate", f"{(results['Immune'].iloc[-1] / (s0 + c0)) * 100:.1f}%")
+with col4:
+    st.metric("Final Susceptible", f"{results['Susceptible'].iloc[-1]:.2f}")
+
 # Create tabs for different views
-tab1, tab2, tab3, tab4= st.tabs(["Epidemic Curve", "Sensitivity Analysis", "Parameter Relationships", "Data Table"])
+tab1, tab2, tab3, tab4 = st.tabs(["Epidemic Curve", "Sensitivity Analysis", "Parameter Relationships", "Data Table"])
 
 with tab1:
     st.header("Epidemic Curve")
     
-    # First show summary statistics in a row of metrics ABOVE the plot
-    st.subheader("Summary Statistics")
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Peak Cases", f"{results['Cases'].max():.2f}")
-    with col2:
-        st.metric("Time of Peak", f"{results['Cases'].idxmax()} generations")
-    with col3:
-        st.metric("Attack Rate", f"{(results['Immune'].iloc[-1] / (s0 + c0)) * 100:.1f}%")
-    with col4:
-        st.metric("Final Susceptible", f"{results['Susceptible'].iloc[-1]:.2f}")
-    
-    # Then display the plot
+    # Display the plot
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(results['Time'], results['Cases'], label='Active Cases', color='red', linewidth=2)
     ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
