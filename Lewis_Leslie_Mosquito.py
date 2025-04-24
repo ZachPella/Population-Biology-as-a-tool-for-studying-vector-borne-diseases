@@ -8,7 +8,7 @@ import io
 def run():    
     # Display title and description
     st.title("🦟 Leslie Matrix Mosquitos Population Model")
-    st.markdown("####🌡️A discrete, age-structured model of population growth")
+    st.markdown("#### 🌡️A discrete, age-structured model of population growth")
     st.markdown("""
     This interactive application simulates mosquito population dynamics using a Leslie Matrix model.
     Adjust the parameters using the sliders and see how they affect the population growth.
