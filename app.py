@@ -6,8 +6,8 @@ import Macdonald
 
 st.set_page_config(page_title="Population Biology Models", layout="wide")
 
-st.sidebar.title("🧪 Zach's Epidemiological Apps")
-app = st.sidebar.radio("Select a model to explore:", [
+st.sidebar.title("🧬 Zach's Disease Modeling Suite")
+app = st.sidebar.radio("Choose a model:", [
     "Reed-Frost",
     "Leslie Matrix - Roach",
     "Leslie Matrix - Mosquito",
