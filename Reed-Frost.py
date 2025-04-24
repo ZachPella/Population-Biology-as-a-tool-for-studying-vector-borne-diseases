@@ -1,141 +1,129 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import altair as alt
-import io
-import math
+import numpy as np
+import io  
 
 # Set page configuration
-st.set_page_config(page_title="Macdonald's Model of Vectorial Capacity", layout="wide")
+st.set_page_config(page_title="Reed-Frost Epidemic Model", layout="wide")
 
-# Display title and description
-st.title("Macdonald's Model of Vectorial Capacity")
+# Display title and description with equation at the top
+st.title("Reed-Frost Epidemic Model Simulator")
 st.markdown("""
-This interactive application simulates the vectorial capacity in vector-borne disease transmission using Macdonald's model.
-Adjust the parameters using the sliders and see how they affect the vectorial capacity and disease transmission potential.
+This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model.
+Adjust the parameters using the sliders and see how they affect the epidemic curve and disease dynamics.
 
-**Definition**: Vectorial capacity is the average number of potentially infective bites that would eventually arise from all the vectors that bite a single infectious host on a single day.
+**Definition**: The Reed-Frost model is a discrete-time epidemic model that describes how a disease spreads through a population over distinct time periods or generations.
 
-**Macdonald's Equation**: 
-$C = \\frac{ma^2b p^n}{-\\ln(p)}$ 
+**Reed-Frost Equation**: 
+$C_{t+1} = S_t \cdot (1 - (1-p)^{C_t})$ 
+
+Where:
+- $C_{t+1}$ is the number of new cases in the next time period
+- $S_t$ is the number of susceptible individuals in the current time period
+- $p$ is the probability of effective contact between an infected and susceptible individual
+- $C_t$ is the number of cases in the current time period
 
 **Parameters:**
-- **Vector:host ratio (m)**: Number of vectors per human host
-- **Biting rate (a)**: Number of bites per vector per day on hosts
-- **Vector competence (b)**: Proportion of vectors that develop infection after feeding on an infectious host
-- **Daily survival probability (p)**: Probability that a vector survives one day
-- **Extrinsic incubation period (n)**: Number of days required for the pathogen to develop in the vector
+- **P**: The probability of effective contact between infected and susceptible individuals
+- **C0**: The initial number of cases in the population
+- **S0**: The initial number of susceptible individuals
+- **B**: Birth rate per time period (adds new susceptibles)
+- **I**: Immigration rate per time period (adds new susceptibles)
+- **D**: Death rate per time period (applies to all population groups)
+- **M**: Mortality rate from disease (applies only to active cases)
 """)
+
+# Helper function for downloading plots
+def get_image_download_link(fig):
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=300)
+    buf.seek(0)
+    return buf
+
+# Define the Reed-Frost model function
+def reed_frost_model(p, c0, s0, b=0, i=0, d=0, m=0, time_periods=100):
+    """
+    Implement the Reed-Frost epidemic model
+    
+    Parameters:
+    - p: Probability of effective contact
+    - c0: Initial number of cases
+    - s0: Initial number of susceptible individuals
+    - b: Birth rate per time period
+    - i: Immigration rate per time period
+    - d: Death rate per time period
+    - m: Mortality rate from disease per time period
+    - time_periods: Number of time periods to simulate
+    
+    Returns:
+    - DataFrame with cases, susceptible, and immune counts over time
+    """
+    # Initialize arrays to store results
+    time = np.arange(time_periods)
+    cases = np.zeros(time_periods)
+    susceptible = np.zeros(time_periods)
+    immune = np.zeros(time_periods)
+    total = np.zeros(time_periods)
+    
+    # Set initial conditions
+    cases[0] = c0
+    susceptible[0] = s0
+    immune[0] = 0
+    total[0] = c0 + s0
+    
+    # Run the model
+    for t in range(1, time_periods):
+        # Calculate new cases based on Reed-Frost equation
+        q = (1 - p) ** cases[t-1]  # Probability of escaping infection
+        new_cases = susceptible[t-1] * (1 - q)
+        
+        # Update population with births, deaths, immigration
+        new_births = total[t-1] * b
+        new_immigrants = i
+        natural_deaths = total[t-1] * d
+        disease_deaths = cases[t-1] * m
+        
+        # Update states
+        cases[t] = new_cases
+        susceptible[t] = susceptible[t-1] - new_cases + new_births + new_immigrants
+        if total[t-1] > 0:
+            susceptible[t] -= (susceptible[t-1]/total[t-1]) * natural_deaths
+        
+        immune[t] = immune[t-1] + cases[t-1] - disease_deaths
+        if total[t-1] > 0:
+            immune[t] -= (immune[t-1]/total[t-1]) * natural_deaths
+            
+        total[t] = cases[t] + susceptible[t] + immune[t]
+        
+    # Create DataFrame
+    df = pd.DataFrame({
+        'Time': time,
+        'Cases': cases,
+        'Susceptible': susceptible,
+        'Immune': immune,
+        'Total': total
+    })
+    
+    return df
 
 # Create sidebar with parameters
 st.sidebar.header("Model Parameters")
 
-# Vector density parameters
-vector_host_ratio = st.sidebar.slider("Vector:host ratio (m)", 0.1, 50.0, 10.0, 0.1, 
-                                    help="Number of vectors per human host")
+p = st.sidebar.slider("Probability of Effective Contact (P)", 0.0, 1.0, 0.1, 0.01)
+c0 = st.sidebar.number_input("Initial number of cases (C0)", 1, 1000, 1)
+s0 = st.sidebar.number_input("Initial number of susceptible individuals (S0)", 1, 10000, 10)
+b = st.sidebar.slider("Birth rate per time period (B)", 0.0, 0.2, 0.0, 0.01)
+i = st.sidebar.slider("Immigration rate per time period (I)", 0, 10, 0, 1)
+d = st.sidebar.slider("Death rate per time period (D)", 0.0, 0.2, 0.0, 0.01)
+m = st.sidebar.slider("Mortality rate from disease per time period (M)", 0.0, 0.5, 0.0, 0.01)
+time_periods = st.sidebar.slider("Number of time periods", 10, 200, 50, 10)
 
-# Biting behavior parameters
-biting_rate = st.sidebar.slider("Daily biting rate (a)", 0.0, 1.0, 0.3, 0.01, 
-                             help="Probability that a vector feeds on a host in one day")
+# Run the model with the current parameters
+results = reed_frost_model(p, c0, s0, b, i, d, m, time_periods)
 
-# Host preference calculation
-st.sidebar.subheader("Host Preference Factors")
-host_preference = st.sidebar.slider("Host preference index (0-1)", 0.0, 1.0, 0.5, 0.01,
-                                 help="Preference for human hosts vs other animals (1 = feeds only on humans)")
-
-days_between_feedings = st.sidebar.number_input("Number of days between feedings", 1, 14, 3, 
-                                            help="Average number of days between blood meals")
-
-# Vector competence parameter
-vector_competence = st.sidebar.slider("Vector competence (b)", 0.0, 1.0, 0.5, 0.01,
-                                   help="Proportion of vectors that develop infection after feeding on an infectious host")
-
-# Survival parameters
-daily_survival = st.sidebar.slider("Daily survival probability (p)", 0.0, 1.0, 0.9, 0.01,
-                                help="Probability that a vector survives one day")
-
-# Calculate vector lifespan after EIP
-vector_lifespan = 1/(-math.log(daily_survival)) if daily_survival > 0 else 0
-st.sidebar.text(f"Vector lifespan: {vector_lifespan:.2f} days")
-
-# Pathogen parameters
-extrinsic_incubation = st.sidebar.slider("Extrinsic incubation period (n)", 1, 30, 10, 1,
-                                      help="Days required for pathogen development in vector")
-
-# Function to calculate vectorial capacity
-def calculate_vectorial_capacity(m, a, b, p, n):
-    """
-    Calculate the vectorial capacity using Macdonald's formula
-    
-    Parameters:
-    - m: Vector:host ratio
-    - a: Daily biting rate
-    - b: Vector competence
-    - p: Daily survival probability
-    - n: Extrinsic incubation period
-    
-    Returns:
-    - C: Vectorial capacity
-    """
-    # Prevent domain errors with invalid parameters
-    if p <= 0 or p >= 1:
-        return 0
-    
-    # Handle other potential errors
-    try:
-        # Macdonald's formula: C = ma²bp^n/-ln(p)
-        return (m * (a**2) * b * (p**n)) / (-math.log(p))
-    except Exception:
-        # Return 0 if any calculation error occurs
-        return 0
-
-# Calculate vectorial capacity with current parameters
-vectorial_capacity = calculate_vectorial_capacity(
-    vector_host_ratio,
-    biting_rate,
-    vector_competence,
-    daily_survival,
-    extrinsic_incubation
-)
-
-# Calculate basic reproduction number (R0) assuming human recovery rate of 0.14 (~ 7 days infectious period)
-recovery_rate = 0.14  # recovery rate per day
-r0 = vectorial_capacity * vector_competence / recovery_rate
-
-# Calculate minimum survival rate needed to maintain transmission
-if biting_rate > 0 and vector_competence > 0 and vector_host_ratio > 0:
-    critical_daily_survival = math.exp(-1/extrinsic_incubation)
-else:
-    critical_daily_survival = 0
-
-# Display the summary statistics under the header section
-st.header("Summary Statistics")
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric("Vectorial Capacity (C)", f"{vectorial_capacity:.4f}")
-    
-with col2:
-    st.metric("Basic Reproduction Number (R₀)", f"{r0:.4f}", 
-             help="R₀ = Vectorial Capacity × Vector Competence ÷ Human Recovery Rate")
-    
-with col3:
-    st.metric("Critical Daily Survival", f"{critical_daily_survival:.4f}",
-             delta=f"{(daily_survival - critical_daily_survival):.4f}", 
-             delta_color="normal",
-             help="Minimum daily survival rate needed for vectors to live long enough to transmit the pathogen")
-
-# Helper function to convert figure to downloadable data
-def fig_to_bytes(fig):
-    """Convert a matplotlib figure to bytes for downloading"""
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-    buf.seek(0)
-    return buf
-
-# Create tabs for different analyses
-tab1, tab2, tab3, tab4= st.tabs(["Sensitivity Analysis", "Host Preference Impact", "Parameter Relationships", "Data Table"])
+# Create tabs for different views
+tab1, tab2, tab3, tab4= st.tabs(["Epidemic Curve", "Sensitivity Analysis", "Parameter Relationships", "Data Table"])
 
 with tab1:
     st.header("Epidemic Curve")
@@ -572,3 +560,5 @@ with tab4:
     st.write(f"Attack rate: {((results['Immune'].iloc[-1] + results['Cases'].iloc[-1]) / (s0 + c0)) * 100:.2f}%")
     st.write(f"Maximum daily incidence: {np.diff(np.append(0, (results['Immune'] + results['Cases']).values)).max():.2f}")
     st.write(f"Final population size: {results['Total'].iloc[-1]:.2f}")
+
+   
