@@ -6,7 +6,8 @@ import io
 
 def run():
     # Display title and description with equation at the top
-    st.title("Reed-Frost Epidemic Model Simulator")
+    st.title("🧬 Reed-Frost Epidemic Simulator")
+    st.markdown("#### 📊 Modeling Chain Binomial Spread")
     st.markdown("""
     This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model.
     Adjust the parameters using the sliders and see how they affect the epidemic curve and disease dynamics.
