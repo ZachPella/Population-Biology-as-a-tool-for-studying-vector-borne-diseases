@@ -5,9 +5,7 @@ import numpy as np
 import io  
 
 def run():
-    st.set_page_config(page_title="Reed-Frost Epidemic Model", layout="wide")
-
-# Display title and description with equation at the top
+    # Display title and description with equation at the top
     st.title("Reed-Frost Epidemic Model Simulator")
     st.markdown("""
     This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model.
