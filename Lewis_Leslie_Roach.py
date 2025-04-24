@@ -7,7 +7,8 @@ import io
 
 def run():
     # Display title and description
-    st.title("Leslie Matrix Population Model for Cockroaches")
+    st.title("🪳 Cockroach Population Model")
+    st.markdown("#### 🏚️ Urban pest growth via Leslie matrix dynamics")
     st.markdown("""
     This interactive application simulates cockroach population dynamics using a Leslie Matrix model.
     Adjust the parameters using the sliders and see how they affect the population growth.
