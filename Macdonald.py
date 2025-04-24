@@ -135,7 +135,7 @@ def fig_to_bytes(fig):
     return buf
 
 # Create tabs for different analyses
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Sensitivity Analysis", "Host Preference Impact", "Parameter Relationships", "Data Table", "Model Information"])
+tab1, tab2, tab3, tab4= st.tabs(["Sensitivity Analysis", "Host Preference Impact", "Parameter Relationships", "Data Table"])
 
 with tab1:
     st.header("Sensitivity Analysis")
@@ -636,85 +636,3 @@ with tab4:
         file_name="vectorial_capacity_results.csv",
         mime="text/csv"
     )
-
-with tab5:
-    st.header("About Macdonald's Model of Vectorial Capacity")
-    
-    st.subheader("Model Overview")
-    st.markdown("""
-    The concept of vectorial capacity was developed by George Macdonald in the 1950s as a framework for understanding malaria transmission dynamics. It has since been applied to many vector-borne diseases.
-    
-    Vectorial capacity quantifies the potential intensity of transmission by a vector population. It represents the average number of potentially infective bites that would eventually arise from all the vectors that bite a single infectious host on a single day.
-    """)
-    
-    st.subheader("Mathematical Formula")
-    st.latex(r'''
-    C = \frac{ma^2b p^n}{-\ln(p)}
-    ''')
-    
-    st.markdown("""
-    Where:
-    - C is the vectorial capacity (potential new infections per case per day)
-    - m is the vector:host ratio
-    - a is the human biting habit (bites per vector per day)
-    - b is the vector competence (probability of infection after feeding)
-    - p is the daily survival probability
-    - n is the extrinsic incubation period
-    """)
-    
-    st.subheader("Key Concepts")
-    st.markdown("""
-    1. **Vector:host ratio (m)** - Number of vectors per human host
-       - Has a linear effect on vectorial capacity
-       - Can be targeted by reducing breeding sites or using adulticides
-    
-    2. **Biting rate (a)** - Number of bites per vector per day on hosts
-       - Appears as a² in the equation, giving it a quadratic effect
-       - One of the most influential parameters
-       - Can be reduced through bed nets, repellents, or protective clothing
-    
-    3. **Vector competence (b)** - Proportion of vectors that become infective after feeding
-       - Has a linear effect on vectorial capacity
-       - Varies by vector species and pathogen strain
-       - Can be targeted through genetic approaches
-    
-    4. **Daily survival probability (p)** - Probability a vector survives one day
-       - Has a complex, exponential effect
-       - Appears twice in the equation: as p^n and in denominator as -ln(p)
-       - Most sensitive parameter, especially at high values
-       - Target of most insecticide-based control methods
-    
-    5. **Extrinsic incubation period (n)** - Days required for pathogen development
-       - Has an exponential, inverse effect through p^n
-       - Determined by pathogen biology and temperature
-       - Longer periods reduce vectorial capacity as fewer vectors survive
-    """)
-    
-    st.subheader("Relationship to Basic Reproduction Number (R₀)")
-    st.markdown("""
-    Vectorial capacity is directly related to R₀, the number of secondary human cases arising from one case:
-   
-    $R₀ = C × b × 1/r$ (where r is the human recovery rate)
-   
-    When R₀ > 1, the disease can spread in a population
-    When R₀ < 1, the disease will eventually die out
-    """)
-    
-    st.subheader("Applications")
-    st.markdown("""
-    **Vector Control Strategy**:
-    - Informs which parameters to target for maximum impact
-    - Reducing vector survival (through insecticides)
-    - Reducing vector density (through breeding site elimination)
-    - Reducing human-vector contact (through bed nets, repellents)
-    
-    **Predicting Disease Dynamics**:
-    - Seasonal patterns based on vector population fluctuations
-    - Geographic variation in transmission potential
-    - Impact of climate change on disease spread
-    
-    **Intervention Assessment**:
-    - Predicting the impact of control measures
-    - Setting targets for disease elimination
-    - Evaluating cost-effectiveness of different strategies
-    """)
