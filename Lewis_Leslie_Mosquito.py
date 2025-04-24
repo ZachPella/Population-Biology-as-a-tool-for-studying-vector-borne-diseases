@@ -5,10 +5,7 @@ import matplotlib.pyplot as plt
 import altair as alt
 import io
 
-def run():
-    # Set page configuration
-    st.set_page_config(page_title="Leslie Matrix Population Model for Mosquitoes", layout="wide")
-    
+def run():    
     # Display title and description
     st.title("Leslie Matrix Population Model for Mosquitoes")
     st.markdown("""
