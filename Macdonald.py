@@ -8,7 +8,8 @@ import math
 
 def run():
   # Display title and description
-  st.title("Macdonald's Model of Vectorial Capacity")
+  st.title("⚙️ Macdonald Malaria Transmission Model")
+  st.markdown("#### 🩸 Explore mosquito-human infection cycles")
   st.markdown("""
   This interactive application simulates the vectorial capacity in vector-borne disease transmission using Macdonald's model.
   Adjust the parameters using the sliders and see how they affect the vectorial capacity and disease transmission potential.
