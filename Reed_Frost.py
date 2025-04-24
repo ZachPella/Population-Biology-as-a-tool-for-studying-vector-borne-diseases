@@ -6,8 +6,8 @@ import io
 
 def run():
     # Display title and description with equation at the top
-    st.title("🧬 Reed-Frost Transmission Model")
-    st.markdown("#### 🔄 Discrete-time epidemic progression simulator")
+    st.title("🧬 Reed-Frost Chain Binomial Model")
+    st.markdown("####🔄 Generation-based epidemic simulator")
     st.markdown("""
     This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model.
     Adjust the parameters using the sliders and see how they affect the epidemic curve and disease dynamics.
