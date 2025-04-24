@@ -4,22 +4,21 @@ import Lewis_Leslie_Roach
 import Lewis_Leslie_Mosquito
 import Macdonald
 
-st.set_page_config(page_title="Epidemiological Models Dashboard", layout="wide")
+st.set_page_config(page_title="Population Biology Models", layout="wide")
 
-st.sidebar.title("📊 Choose a Model")
-
-model_choice = st.sidebar.radio("Select a simulation:", [
+st.sidebar.title("🧪 Zach's Epidemiological Apps")
+app = st.sidebar.radio("Select a model to explore:", [
     "Reed-Frost",
     "Leslie Matrix - Roach",
     "Leslie Matrix - Mosquito",
     "Macdonald Model"
 ])
 
-if model_choice == "Reed-Frost":
+if app == "Reed-Frost":
     Reed_Frost.run()
-elif model_choice == "Leslie Matrix - Roach":
+elif app == "Leslie Matrix - Roach":
     Lewis_Leslie_Roach.run()
-elif model_choice == "Leslie Matrix - Mosquito":
+elif app == "Leslie Matrix - Mosquito":
     Lewis_Leslie_Mosquito.run()
-elif model_choice == "Macdonald Model":
+elif app == "Macdonald Model":
     Macdonald.run()
