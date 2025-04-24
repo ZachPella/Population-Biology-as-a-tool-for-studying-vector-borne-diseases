@@ -7,9 +7,6 @@ import io
 import math
 
 def run():
-  # Set page configuration
-  st.set_page_config(page_title="Macdonald's Model of Vectorial Capacity", layout="wide")
-  
   # Display title and description
   st.title("Macdonald's Model of Vectorial Capacity")
   st.markdown("""
