@@ -379,14 +379,6 @@ with tab3:
     ax4.axhline(y=egg_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
     ax4.axhline(y=egg_stage_duration + larval_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
     
-    # Add stage labels
-    ax4.text(-0.05, egg_stage_duration/2, 'EGGS', rotation=90, 
-             transform=ax4.get_yaxis_transform(), va='center', ha='right', fontweight='bold')
-    ax4.text(-0.05, egg_stage_duration + larval_stage_duration/2, 'LARVAE', rotation=90, 
-             transform=ax4.get_yaxis_transform(), va='center', ha='right', fontweight='bold')
-    ax4.text(-0.05, egg_stage_duration + larval_stage_duration + 5, 'ADULTS', rotation=90, 
-             transform=ax4.get_yaxis_transform(), va='center', ha='right', fontweight='bold')
-    
     st.pyplot(fig4)
     
     st.download_button(
