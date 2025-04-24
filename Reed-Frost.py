@@ -190,4 +190,5 @@ with tab3:
     ### References:
     - Abbey, H. (1952). An examination of the Reed-Frost theory of epidemics. Human Biology, 24(3), 201-233.
     - Fine, P. E. (1977). A commentary on the mechanical analogue to the Reed-Frost epidemic model. American Journal of Epidemiology, 106(2), 87-100.
+    - Scott, T. W., & Morrison, A. C. (2004). Population Biology as a Tool for Studying Vector-Borne Diseases. In W. H. Marquardt (Ed.), Biology of Disease Vectors (2nd ed., Chapter 24). Academic Press. ISBN: 9780124732766
     """)
