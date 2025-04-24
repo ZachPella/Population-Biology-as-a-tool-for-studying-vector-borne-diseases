@@ -128,53 +128,53 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(["Epidemic Curve", "Sensitivity Analysis"
 with tab1:
     st.header("Epidemic Curve")
     
-    # Create columns for the main plot and summary stats
-    col1, col2 = st.columns([3, 1])
+    # First show summary statistics in a row of metrics ABOVE the plot
+    st.subheader("Summary Statistics")
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        # Create plot
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(results['Time'], results['Cases'], label='Active Cases', color='red', linewidth=2)
-        ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
-        ax.plot(results['Time'], results['Immune'], label='Immune', color='green', linewidth=2)
-        ax.plot(results['Time'], results['Total'], label='Total Population', color='black', linestyle='--', linewidth=1)
-        
-        # Identify epidemic phases
-        peak_day = results['Cases'].idxmax()
-        early_phase = int(peak_day * 0.3) if peak_day > 0 else 0
-        late_phase = min(len(results) - 1, int(peak_day * 1.7)) if peak_day > 0 else len(results) - 1
-        
-        # Highlight phases with different background colors
-        if peak_day > 0:
-            ax.axvspan(0, early_phase, alpha=0.2, color='green', label='Early Phase')
-            ax.axvspan(early_phase, peak_day, alpha=0.2, color='yellow', label='Growth Phase')
-            ax.axvspan(peak_day, late_phase, alpha=0.2, color='blue', label='Decline Phase')
-            ax.axvspan(late_phase, results['Time'].max(), alpha=0.2, color='purple', label='Late Phase')
-        
-        ax.set_xlabel('Time (Generations)', fontsize=12)
-        ax.set_ylabel('Number of Individuals', fontsize=12)
-        ax.set_title('Reed-Frost Epidemic Curve', fontsize=14)
-        ax.legend(fontsize=10)
-        ax.grid(True, alpha=0.3)
-        
-        st.pyplot(fig)
-        
-        # Add download button for the plot
-        st.download_button(
-            label="Download Plot",
-            data=get_image_download_link(fig),
-            file_name="epidemic_curve.png",
-            mime="image/png"
-        )
-    
-    with col2:
-        # Show summary statistics
-        st.subheader("Summary Statistics")
         st.metric("Peak Cases", f"{results['Cases'].max():.2f}")
+    with col2:
         st.metric("Time of Peak", f"{results['Cases'].idxmax()} generations")
-        st.metric("Attack Rate", f"{(results['Immune'].iloc[-1] / (s0 + c0)) * 100:.1f}%", 
-                 help="Percentage of initial population that becomes infected")
+    with col3:
+        st.metric("Attack Rate", f"{(results['Immune'].iloc[-1] / (s0 + c0)) * 100:.1f}%")
+    with col4:
         st.metric("Final Susceptible", f"{results['Susceptible'].iloc[-1]:.2f}")
+    
+    # Then display the plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(results['Time'], results['Cases'], label='Active Cases', color='red', linewidth=2)
+    ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
+    ax.plot(results['Time'], results['Immune'], label='Immune', color='green', linewidth=2)
+    ax.plot(results['Time'], results['Total'], label='Total Population', color='black', linestyle='--', linewidth=1)
+    
+    # Identify epidemic phases
+    peak_day = results['Cases'].idxmax()
+    early_phase = int(peak_day * 0.3) if peak_day > 0 else 0
+    late_phase = min(len(results) - 1, int(peak_day * 1.7)) if peak_day > 0 else len(results) - 1
+    
+    # Highlight phases with different background colors
+    if peak_day > 0:
+        ax.axvspan(0, early_phase, alpha=0.2, color='green', label='Early Phase')
+        ax.axvspan(early_phase, peak_day, alpha=0.2, color='yellow', label='Growth Phase')
+        ax.axvspan(peak_day, late_phase, alpha=0.2, color='blue', label='Decline Phase')
+        ax.axvspan(late_phase, results['Time'].max(), alpha=0.2, color='purple', label='Late Phase')
+    
+    ax.set_xlabel('Time (Generations)', fontsize=12)
+    ax.set_ylabel('Number of Individuals', fontsize=12)
+    ax.set_title('Reed-Frost Epidemic Curve', fontsize=14)
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3)
+    
+    st.pyplot(fig)
+    
+    # Add download button for the plot
+    st.download_button(
+        label="Download Plot",
+        data=get_image_download_link(fig),
+        file_name="epidemic_curve.png",
+        mime="image/png"
+    )
 
 with tab2:
     st.header("Sensitivity Analysis")
@@ -554,85 +554,83 @@ with tab4:
     
     # Show summary statistics
     st.subheader("Summary Statistics")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.write(f"Peak number of cases: {results['Cases'].max():.2f} at time {results['Cases'].idxmax()}")
-        st.write(f"Total individuals who became infected: {results['Immune'].iloc[-1] + results['Cases'].iloc[-1]:.2f}")
-        st.write(f"Final susceptible population: {results['Susceptible'].iloc[-1]:.2f}")
-    
-    with col2:
-        st.write(f"Attack rate: {((results['Immune'].iloc[-1] + results['Cases'].iloc[-1]) / (s0 + c0)) * 100:.2f}%")
-        st.write(f"Maximum daily incidence: {np.diff(np.append(0, (results['Immune'] + results['Cases']).values)).max():.2f}")
-        st.write(f"Final population size: {results['Total'].iloc[-1]:.2f}")
+    st.write(f"Peak number of cases: {results['Cases'].max():.2f} at time {results['Cases'].idxmax()}")
+    st.write(f"Total individuals who became infected: {results['Immune'].iloc[-1] + results['Cases'].iloc[-1]:.2f}")
+    st.write(f"Final susceptible population: {results['Susceptible'].iloc[-1]:.2f}")
+    st.write(f"Attack rate: {((results['Immune'].iloc[-1] + results['Cases'].iloc[-1]) / (s0 + c0)) * 100:.2f}%")
+    st.write(f"Maximum daily incidence: {np.diff(np.append(0, (results['Immune'] + results['Cases']).values)).max():.2f}")
+    st.write(f"Final population size: {results['Total'].iloc[-1]:.2f}")
 
 with tab5:
     st.header("About the Reed-Frost Model")
     
-    # Create columns for organization
-    col1, col2 = st.columns([3, 2])
+    st.subheader("Model Overview")
+    st.markdown("""
+    The Reed-Frost model is a discrete-time, stochastic chain binomial model of epidemic spread developed by Lowell Reed and Wade Hampton Frost in the 1920s at Johns Hopkins University. It serves as one of the fundamental models in teaching epidemiology and understanding disease transmission dynamics.
+    """)
     
-    with col1:
-        st.subheader("Model Overview")
-        st.markdown("""
-        The Reed-Frost model is a discrete-time, stochastic chain binomial model of epidemic spread developed by Lowell Reed and Wade Hampton Frost in the 1920s at Johns Hopkins University. It serves as one of the fundamental models in teaching epidemiology and understanding disease transmission dynamics.
-
-        ### Key Assumptions:
-        - The population is homogeneously mixed (everyone has equal probability of contact)
-        - All cases are equally infectious during a fixed infectious period
-        - The disease has a fixed duration (typically one time unit)
-        - Recovery from the disease confers lifetime immunity
-        - The probability of effective contact between individuals is constant
-        
-        ### The Core Equation:
-        The probability that a susceptible individual escapes infection in a given time period is:
-        
-        $q = (1 - p)^C$
-        
-        Where:
-        - $q$ is the probability of escaping infection
-        - $p$ is the probability of effective contact
-        - $C$ is the number of infectious cases
-        
-        The number of new cases in the next time period is:
-        
-        $C_{t+1} = S_t \cdot (1 - q) = S_t \cdot (1 - (1-p)^{C_t})$
-        
-        ### Extensions in This Simulator:
-        This simulator extends the basic Reed-Frost model to include:
-        - Birth rate (B): Adds new susceptible individuals
-        - Immigration rate (I): Adds new susceptible individuals
-        - Death rate (D): Removes individuals from all groups
-        - Disease mortality rate (M): Removes individuals from the infectious group
-        """)
+    st.subheader("Key Assumptions:")
+    st.markdown("""
+    - The population is homogeneously mixed (everyone has equal probability of contact)
+    - All cases are equally infectious during a fixed infectious period
+    - The disease has a fixed duration (typically one time unit)
+    - Recovery from the disease confers lifetime immunity
+    - The probability of effective contact between individuals is constant
+    """)
     
-    with col2:
-        st.subheader("Mathematical Model")
-        st.latex(r'''
-        \begin{align}
-        C_{t+1} &= S_t \cdot (1 - (1-p)^{C_t}) \\
-        S_{t+1} &= S_t - C_{t+1} + B \cdot N_t + I - d \cdot S_t \\
-        R_{t+1} &= R_t + C_t - m \cdot C_t - d \cdot R_t \\
-        N_{t+1} &= S_{t+1} + C_{t+1} + R_{t+1}
-        \end{align}
-        ''')
-        
-        st.subheader("Applications")
-        st.markdown("""
-        The Reed-Frost model is used for:
-        
-        - Teaching basic epidemic concepts
-        - Illustrating herd immunity thresholds
-        - Modeling small population outbreaks
-        - Comparing intervention strategies
-        - Understanding epidemic thresholds
-        
-        **Limitations:**
-        - Assumes homogeneous mixing
-        - Fixed time periods may not match reality
-        - No partial immunity or waning immunity
-        - Simple population structure
-        """)
+    st.subheader("The Core Equation:")
+    st.markdown("""
+    The probability that a susceptible individual escapes infection in a given time period is:
+    
+    $q = (1 - p)^C$
+    
+    Where:
+    - $q$ is the probability of escaping infection
+    - $p$ is the probability of effective contact
+    - $C$ is the number of infectious cases
+    
+    The number of new cases in the next time period is:
+    
+    $C_{t+1} = S_t \cdot (1 - q) = S_t \cdot (1 - (1-p)^{C_t})$
+    """)
+    
+    st.subheader("Mathematical Model")
+    st.latex(r'''
+    \begin{align}
+    C_{t+1} &= S_t \cdot (1 - (1-p)^{C_t}) \\
+    S_{t+1} &= S_t - C_{t+1} + B \cdot N_t + I - d \cdot S_t \\
+    R_{t+1} &= R_t + C_t - m \cdot C_t - d \cdot R_t \\
+    N_{t+1} &= S_{t+1} + C_{t+1} + R_{t+1}
+    \end{align}
+    ''')
+    
+    st.subheader("Extensions in This Simulator:")
+    st.markdown("""
+    This simulator extends the basic Reed-Frost model to include:
+    - Birth rate (B): Adds new susceptible individuals
+    - Immigration rate (I): Adds new susceptible individuals
+    - Death rate (D): Removes individuals from all groups
+    - Disease mortality rate (M): Removes individuals from the infectious group
+    """)
+    
+    st.subheader("Applications")
+    st.markdown("""
+    The Reed-Frost model is used for:
+    
+    - Teaching basic epidemic concepts
+    - Illustrating herd immunity thresholds
+    - Modeling small population outbreaks
+    - Comparing intervention strategies
+    - Understanding epidemic thresholds
+    """)
+    
+    st.subheader("Limitations:")
+    st.markdown("""
+    - Assumes homogeneous mixing
+    - Fixed time periods may not match reality
+    - No partial immunity or waning immunity
+    - Simple population structure
+    """)
     
     # Add historical context
     st.subheader("Historical Context")
@@ -643,29 +641,3 @@ with tab5:
     
     The Reed-Frost model has served as a foundation for more complex epidemic models including SIR (Susceptible-Infected-Recovered) continuous-time models that are widely used today in infectious disease forecasting.
     """)
-    
-    # Add comparison with other models
-    st.subheader("Comparison with Other Epidemic Models")
-    
-    # Create comparison table
-    models_comparison = pd.DataFrame({
-        'Model': ['Reed-Frost', 'SIR (Continuous)', 'SEIR', 'Agent-Based'],
-        'Time Scale': ['Discrete (generations)', 'Continuous', 'Continuous', 'Can be either'],
-        'Stochasticity': ['Deterministic in this implementation', 'Deterministic', 'Deterministic', 'Stochastic'],
-        'Population Structure': ['Homogeneous', 'Homogeneous', 'Homogeneous', 'Heterogeneous'],
-        'Key Formula': [
-            'C(t+1) = S(t)[1-(1-p)^C(t)]',
-            'dS/dt = -βSI, dI/dt = βSI-γI',
-            'Adds exposed period (E)',
-            'Individual-level rules'
-        ],
-        'Strengths': [
-            'Simple, intuitive, educational',
-            'Mathematically tractable, continuous time',
-            'Models diseases with incubation period',
-            'Complex heterogeneity, realistic behaviors'
-        ]
-    })
-    
-    st.dataframe(models_comparison)
-    
