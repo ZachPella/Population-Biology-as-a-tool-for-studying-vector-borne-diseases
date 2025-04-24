@@ -10,8 +10,19 @@ st.set_page_config(page_title="Reed-Frost Epidemic Model", layout="wide")
 # Display title and description
 st.title("Reed-Frost Epidemic Model Simulator")
 st.markdown("""
-This interactive tool simulates the spread of an infectious disease using the Reed-Frost model.
-Adjust the parameters using the sliders and see how they affect the epidemic curve.
+This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model.
+Adjust the parameters using the sliders and see how they affect the epidemic curve and disease dynamics.
+
+**Definition**: The Reed-Frost model is a discrete-time epidemic model that describes how a disease spreads through a population over distinct time periods or generations.
+
+**Reed-Frost Equation**: 
+$C_{t+1} = S_t \cdot (1 - (1-p)^{C_t})$ 
+
+Where:
+- $C_{t+1}$ is the number of new cases in the next time period
+- $S_t$ is the number of susceptible individuals in the current time period
+- $p$ is the probability of effective contact between an infected and susceptible individual
+- $C_t$ is the number of cases in the current time period
 
 **Parameters:**
 - **P**: The probability of effective contact between infected and susceptible individuals
@@ -96,6 +107,11 @@ def reed_frost_model(p, c0, s0, b=0, i=0, d=0, m=0, time_periods=100):
     
     return df
 
+# Calculate R0 for the Reed-Frost model
+def calculate_r0(p, s0):
+    """Calculate the basic reproduction number (R0) for the Reed-Frost model"""
+    return p * s0
+
 # Create sidebar with parameters
 st.sidebar.header("Model Parameters")
 
@@ -108,83 +124,636 @@ d = st.sidebar.slider("Death rate per time period (D)", 0.0, 0.2, 0.0, 0.01)
 m = st.sidebar.slider("Mortality rate from disease per time period (M)", 0.0, 0.5, 0.0, 0.01)
 time_periods = st.sidebar.slider("Number of time periods", 10, 200, 50, 10)
 
+# Calculate R0 and display in sidebar
+r0 = calculate_r0(p, s0)
+st.sidebar.subheader("Derived Parameters")
+st.sidebar.metric("Basic Reproduction Number (R₀)", f"{r0:.2f}", 
+                 help="R₀ = P × S₀, represents average number of secondary cases produced by one infected individual")
+
+critical_p = 1 / s0 if s0 > 0 else 0
+st.sidebar.metric("Critical Probability Threshold", f"{critical_p:.4f}",
+                 delta=f"{(p - critical_p):.4f}", delta_color="normal",
+                 help="Minimum probability of effective contact needed for epidemic growth (R₀ > 1)")
+
 # Run the model with the current parameters
 results = reed_frost_model(p, c0, s0, b, i, d, m, time_periods)
 
 # Create tabs for different views
-tab1, tab2, tab3 = st.tabs(["Epidemic Curve", "Data Table", "Model Information"])
+tab1, tab2, tab3, tab4 = st.tabs(["Epidemic Curve", "Sensitivity Analysis", "Parameter Relationships", "Model Information"])
 
 with tab1:
     st.header("Epidemic Curve")
     
-    # Create plot
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(results['Time'], results['Cases'], label='Active Cases', color='red', linewidth=2)
-    ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
-    ax.plot(results['Time'], results['Immune'], label='Immune', color='green', linewidth=2)
-    ax.plot(results['Time'], results['Total'], label='Total Population', color='black', linestyle='--', linewidth=1)
+    # Create columns for the main plot and summary stats
+    col1, col2 = st.columns([3, 1])
     
-    ax.set_xlabel('Time (Generations)', fontsize=12)
-    ax.set_ylabel('Number of Individuals', fontsize=12)
-    ax.set_title('Reed-Frost Epidemic Curve', fontsize=14)
-    ax.legend(fontsize=10)
-    ax.grid(True, alpha=0.3)
+    with col1:
+        # Create plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(results['Time'], results['Cases'], label='Active Cases', color='red', linewidth=2)
+        ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
+        ax.plot(results['Time'], results['Immune'], label='Immune', color='green', linewidth=2)
+        ax.plot(results['Time'], results['Total'], label='Total Population', color='black', linestyle='--', linewidth=1)
+        
+        # Identify epidemic phases
+        peak_day = results['Cases'].idxmax()
+        early_phase = int(peak_day * 0.3) if peak_day > 0 else 0
+        late_phase = min(len(results) - 1, int(peak_day * 1.7)) if peak_day > 0 else len(results) - 1
+        
+        # Highlight phases with different background colors
+        if peak_day > 0:
+            ax.axvspan(0, early_phase, alpha=0.2, color='green', label='Early Phase')
+            ax.axvspan(early_phase, peak_day, alpha=0.2, color='yellow', label='Growth Phase')
+            ax.axvspan(peak_day, late_phase, alpha=0.2, color='blue', label='Decline Phase')
+            ax.axvspan(late_phase, results['Time'].max(), alpha=0.2, color='purple', label='Late Phase')
+        
+        ax.set_xlabel('Time (Generations)', fontsize=12)
+        ax.set_ylabel('Number of Individuals', fontsize=12)
+        ax.set_title('Reed-Frost Epidemic Curve', fontsize=14)
+        ax.legend(fontsize=10)
+        ax.grid(True, alpha=0.3)
+        
+        st.pyplot(fig)
+        
+        # Add download button for the plot
+        st.download_button(
+            label="Download Plot",
+            data=get_image_download_link(fig),
+            file_name="epidemic_curve.png",
+            mime="image/png"
+        )
     
-    st.pyplot(fig)
-    
-    # Add download button for the plot
-    st.download_button(
-        label="Download Plot",
-        data=get_image_download_link(fig),
-        file_name="epidemic_curve.png",
-        mime="image/png"
-    )
+    with col2:
+        # Show summary statistics
+        st.subheader("Summary Statistics")
+        st.metric("Peak Cases", f"{results['Cases'].max():.2f}")
+        st.metric("Time of Peak", f"{results['Cases'].idxmax()} generations")
+        st.metric("Attack Rate", f"{(results['Immune'].iloc[-1] / (s0 + c0)) * 100:.1f}%", 
+                 help="Percentage of initial population that becomes infected")
+        st.metric("Final Susceptible", f"{results['Susceptible'].iloc[-1]:.2f}")
+        
+        # Data table (collapsible)
+        with st.expander("View Data Table"):
+            st.dataframe(results.style.highlight_max(axis=0, color='yellow'))
+            
+            # Add download button for CSV
+            csv = results.to_csv(index=False)
+            st.download_button(
+                label="Download Data as CSV",
+                data=csv,
+                file_name="reed_frost_results.csv",
+                mime="text/csv"
+            )
 
 with tab2:
-    st.header("Results Table")
-    st.dataframe(results.style.highlight_max(axis=0, color='yellow'))
+    st.header("Sensitivity Analysis")
     
-    # Add download button for CSV
-    csv = results.to_csv(index=False)
-    st.download_button(
-        label="Download Data as CSV",
-        data=csv,
-        file_name="reed_frost_results.csv",
-        mime="text/csv"
+    # Choose parameter to vary
+    param_to_vary = st.selectbox(
+        "Select parameter to vary:",
+        ["Probability of Effective Contact (P)", "Initial Cases (C0)", 
+         "Initial Susceptible (S0)", "Birth Rate (B)", "Immigration Rate (I)",
+         "Death Rate (D)", "Disease Mortality Rate (M)"]
     )
     
-    # Show summary statistics
-    st.subheader("Summary Statistics")
-    st.write(f"Peak number of cases: {results['Cases'].max():.2f} at time {results['Cases'].idxmax()}")
-    st.write(f"Total individuals who became infected: {results['Immune'].iloc[-1] + results['Cases'].iloc[-1]:.2f}")
-    st.write(f"Final susceptible population: {results['Susceptible'].iloc[-1]:.2f}")
+    # Set up parameter ranges based on selection
+    if param_to_vary == "Probability of Effective Contact (P)":
+        param_range = np.linspace(0.01, 1.0, 50)
+        param_name = "p"
+        x_label = "Probability of Effective Contact"
+    elif param_to_vary == "Initial Cases (C0)":
+        param_range = np.arange(1, 51)
+        param_name = "c0"
+        x_label = "Initial Cases"
+    elif param_to_vary == "Initial Susceptible (S0)":
+        param_range = np.linspace(10, 500, 50)
+        param_name = "s0"
+        x_label = "Initial Susceptible Population"
+    elif param_to_vary == "Birth Rate (B)":
+        param_range = np.linspace(0, 0.2, 50)
+        param_name = "b"
+        x_label = "Birth Rate per Time Period"
+    elif param_to_vary == "Immigration Rate (I)":
+        param_range = np.arange(0, 21)
+        param_name = "i"
+        x_label = "Immigration Rate per Time Period"
+    elif param_to_vary == "Death Rate (D)":
+        param_range = np.linspace(0, 0.2, 50)
+        param_name = "d"
+        x_label = "Death Rate per Time Period"
+    else:  # Disease Mortality Rate (M)
+        param_range = np.linspace(0, 0.5, 50)
+        param_name = "m"
+        x_label = "Disease Mortality Rate per Time Period"
+    
+    # Calculate metrics for each parameter value
+    peak_cases = []
+    total_infected = []
+    r0_values = []
+    
+    for param_val in param_range:
+        # Set up parameters dictionary
+        params = {
+            "p": p,
+            "c0": c0,
+            "s0": s0,
+            "b": b,
+            "i": i,
+            "d": d,
+            "m": m
+        }
+        # Update with parameter to vary
+        params[param_name] = param_val
+        
+        # Calculate R0 if relevant
+        if param_name in ["p", "s0"]:
+            r0_val = calculate_r0(params["p"], params["s0"])
+        else:
+            r0_val = calculate_r0(p, s0)  # Use base values
+        r0_values.append(r0_val)
+        
+        # Run model with these parameters
+        results_temp = reed_frost_model(
+            params["p"], params["c0"], params["s0"], 
+            params["b"], params["i"], params["d"], params["m"], 
+            time_periods
+        )
+        
+        # Calculate metrics
+        peak_cases.append(results_temp['Cases'].max())
+        total_infected.append(results_temp['Immune'].iloc[-1] + results_temp['Cases'].iloc[-1])
+    
+    # Create tabs for different metrics to display
+    metric_tab1, metric_tab2, metric_tab3 = st.tabs(["Peak Cases", "Total Infected", "R₀ (if applicable)"])
+    
+    with metric_tab1:
+        # Create figure for peak cases
+        fig1, ax1 = plt.subplots(figsize=(10, 6))
+        ax1.plot(param_range, peak_cases, 'r-', linewidth=2)
+        
+        # Add vertical line for current parameter value
+        if param_name == "p":
+            current_val = p
+        elif param_name == "c0":
+            current_val = c0
+        elif param_name == "s0":
+            current_val = s0
+        elif param_name == "b":
+            current_val = b
+        elif param_name == "i":
+            current_val = i
+        elif param_name == "d":
+            current_val = d
+        else:  # m
+            current_val = m
+        
+        # Find the current peak cases value
+        current_idx = np.abs(param_range - current_val).argmin()
+        current_peak = peak_cases[current_idx]
+        
+        ax1.axvline(x=current_val, color='black', linestyle='--', alpha=0.7)
+        ax1.plot(current_val, current_peak, 'ro', markersize=8)
+        ax1.annotate(f'Current value: {current_val:.2f}\nPeak: {current_peak:.2f}', 
+                    xy=(current_val, current_peak), xytext=(10, -30),
+                    textcoords='offset points', ha='left', va='top',
+                    bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=.2'))
+        
+        ax1.set_xlabel(x_label, fontsize=12)
+        ax1.set_ylabel('Peak Number of Cases', fontsize=12)
+        ax1.set_title(f'Effect of {param_to_vary} on Peak Cases', fontsize=14)
+        ax1.grid(True, alpha=0.3)
+        
+        st.pyplot(fig1)
+    
+    with metric_tab2:
+        # Create figure for total infected
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        ax2.plot(param_range, total_infected, 'b-', linewidth=2)
+        
+        # Find the current total infected value
+        current_idx = np.abs(param_range - current_val).argmin()
+        current_total = total_infected[current_idx]
+        
+        ax2.axvline(x=current_val, color='black', linestyle='--', alpha=0.7)
+        ax2.plot(current_val, current_total, 'bo', markersize=8)
+        ax2.annotate(f'Current value: {current_val:.2f}\nTotal: {current_total:.2f}', 
+                    xy=(current_val, current_total), xytext=(10, -30),
+                    textcoords='offset points', ha='left', va='top',
+                    bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=.2'))
+        
+        ax2.set_xlabel(x_label, fontsize=12)
+        ax2.set_ylabel('Total Number of Infected', fontsize=12)
+        ax2.set_title(f'Effect of {param_to_vary} on Total Infected', fontsize=14)
+        ax2.grid(True, alpha=0.3)
+        
+        st.pyplot(fig2)
+    
+    with metric_tab3:
+        if param_name in ["p", "s0"]:
+            # Create figure for R0 (only for relevant parameters)
+            fig3, ax3 = plt.subplots(figsize=(10, 6))
+            ax3.plot(param_range, r0_values, 'g-', linewidth=2)
+            
+            # Find the current R0 value
+            current_idx = np.abs(param_range - current_val).argmin()
+            current_r0 = r0_values[current_idx]
+            
+            # Add horizontal line at R0 = 1
+            ax3.axhline(y=1, color='red', linestyle='--', alpha=0.7)
+            ax3.annotate('Epidemic Threshold (R₀ = 1)', 
+                        xy=(param_range[len(param_range)//2], 1), xytext=(0, 10),
+                        textcoords='offset points', ha='center', va='bottom',
+                        bbox=dict(boxstyle='round,pad=0.5', fc='lightgreen', alpha=0.5))
+            
+            # Add vertical line for current parameter value
+            ax3.axvline(x=current_val, color='black', linestyle='--', alpha=0.7)
+            ax3.plot(current_val, current_r0, 'go', markersize=8)
+            ax3.annotate(f'Current value: {current_val:.2f}\nR₀: {current_r0:.2f}', 
+                        xy=(current_val, current_r0), xytext=(10, -30),
+                        textcoords='offset points', ha='left', va='top',
+                        bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5),
+                        arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=.2'))
+            
+            # Add shaded regions for R0 > 1 and R0 < 1
+            ax3.fill_between(param_range, 1, max(r0_values)*1.1, color='red', alpha=0.1)
+            ax3.fill_between(param_range, 0, 1, color='green', alpha=0.1)
+            
+            ax3.set_xlabel(x_label, fontsize=12)
+            ax3.set_ylabel('Basic Reproduction Number (R₀)', fontsize=12)
+            ax3.set_title(f'Effect of {param_to_vary} on R₀', fontsize=14)
+            ax3.grid(True, alpha=0.3)
+            
+            st.pyplot(fig3)
+        else:
+            st.write("R₀ calculation only applicable when varying Probability of Effective Contact (P) or Initial Susceptible Population (S0).")
+    
+    # Add interpretation
+    st.subheader("Interpretation")
+    
+    if param_name == "p":
+        st.write("""
+        **Probability of Effective Contact (P)** has a threshold effect on epidemic dynamics. When P is small, R₀ is below 1 and the epidemic does not take off. 
+        As P increases past the threshold value of 1/S₀, R₀ exceeds 1 and both peak cases and total infected increase rapidly.
+        
+        **Control implications**: Reducing the probability of effective contact through interventions like social distancing, masks, or hand hygiene 
+        can be highly effective if it pushes R₀ below 1.
+        """)
+    elif param_name == "c0":
+        st.write("""
+        **Initial Cases (C0)** primarily affects the timing of the epidemic rather than its final size. With more initial cases, the peak occurs earlier 
+        but reaches approximately the same height. The total number infected is relatively insensitive to initial cases when R₀ > 1.
+        
+        **Control implications**: Early detection and isolation of initial cases can delay the epidemic but may not substantially reduce its final size 
+        unless combined with other interventions.
+        """)
+    elif param_name == "s0":
+        st.write("""
+        **Initial Susceptible Population (S0)** has a linear relationship with R₀ and strongly affects both peak height and total cases. 
+        Larger susceptible populations lead to larger epidemics with higher peaks. The critical threshold for epidemic spread decreases as S0 increases.
+        
+        **Control implications**: Reducing the susceptible population through vaccination or creating immune subpopulations through targeted protection 
+        can effectively reduce epidemic potential.
+        """)
+    elif param_name == "b":
+        st.write("""
+        **Birth Rate (B)** adds new susceptibles to the population over time. Higher birth rates can sustain transmission for longer periods and may 
+        lead to endemic disease patterns rather than a single epidemic wave.
+        
+        **Control implications**: In populations with high birth rates, continuous control measures may be needed to prevent resurgence as new susceptibles enter the population.
+        """)
+    else:
+        st.write(f"""
+        **{param_to_vary}** affects the epidemic dynamics by [brief explanation of the specific parameter effects].
+        
+        **Control implications**: [Brief explanation of how this parameter relates to control strategies].
+        """)
 
 with tab3:
-    st.header("About the Reed-Frost Model")
-    st.markdown("""
-    The Reed-Frost model is a mathematical model of infectious disease transmission developed by Lowell Reed and Wade Hampton Frost in the 1920s. It's a discrete-time chain binomial model that predicts how a disease will spread in a closed population.
+    st.header("Parameter Relationships")
+    
+    # Select parameters for X and Y axes
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        x_param = st.selectbox(
+            "Select parameter for X-axis:",
+            ["Probability of Effective Contact (P)", "Initial Cases (C0)", 
+             "Initial Susceptible (S0)", "Birth Rate (B)"],
+            index=0
+        )
+    
+    with col2:
+        y_param = st.selectbox(
+            "Select parameter for Y-axis:",
+            ["Probability of Effective Contact (P)", "Initial Cases (C0)", 
+             "Initial Susceptible (S0)", "Birth Rate (B)"],
+            index=2
+        )
+    
+    # Ensure different parameters are selected
+    if x_param == y_param:
+        st.error("Please select different parameters for X and Y axes.")
+    else:
+        # Define parameter mappings
+        param_configs = {
+            "Probability of Effective Contact (P)": {
+                "range": np.linspace(0.01, 0.5, 15),
+                "name": "p",
+                "label": "Probability of Effective Contact"
+            },
+            "Initial Cases (C0)": {
+                "range": np.arange(1, 16),
+                "name": "c0",
+                "label": "Initial Cases"
+            },
+            "Initial Susceptible (S0)": {
+                "range": np.linspace(10, 200, 15),
+                "name": "s0",
+                "label": "Initial Susceptible Population"
+            },
+            "Birth Rate (B)": {
+                "range": np.linspace(0, 0.2, 15),
+                "name": "b",
+                "label": "Birth Rate per Time Period"
+            }
+        }
+        
+        # Create parameter grids
+        x_range = param_configs[x_param]["range"]
+        y_range = param_configs[y_param]["range"]
+        x_name = param_configs[x_param]["name"]
+        y_name = param_configs[y_param]["name"]
+        
+        # Create meshgrid for heatmap
+        X, Y = np.meshgrid(x_range, y_range)
+        peak_Z = np.zeros_like(X)
+        total_Z = np.zeros_like(X)
+        r0_Z = np.zeros_like(X)
+        
+        # Calculate metrics for each parameter combination
+        for i in range(len(y_range)):
+            for j in range(len(x_range)):
+                # Set default parameters
+                params = {
+                    "p": p,
+                    "c0": c0,
+                    "s0": s0,
+                    "b": b,
+                    "i": i,
+                    "d": d,
+                    "m": m
+                }
+                
+                # Update with grid values
+                params[x_name] = X[i, j]
+                params[y_name] = Y[i, j]
+                
+                # Calculate R0 if both parameters are relevant
+                if x_name == "p" and y_name == "s0":
+                    r0_Z[i, j] = calculate_r0(params["p"], params["s0"])
+                elif x_name == "s0" and y_name == "p":
+                    r0_Z[i, j] = calculate_r0(params["p"], params["s0"])
+                else:
+                    # Use regular parameter values for R0 calculation
+                    r0_Z[i, j] = calculate_r0(params["p"], params["s0"])
+                
+                # Run model with these parameters
+                results_temp = reed_frost_model(
+                    params["p"], params["c0"], params["s0"], 
+                    params["b"], params["i"], params["d"], params["m"], 
+                    time_periods
+                )
+                
+                # Store metrics
+                peak_Z[i, j] = results_temp['Cases'].max()
+                total_Z[i, j] = results_temp['Immune'].iloc[-1] + results_temp['Cases'].iloc[-1]
+        
+        # Create selector for metric to display
+        metric = st.radio(
+            "Select metric to display:",
+            ["Peak Cases", "Total Infected", "R₀ (Basic Reproduction Number)"],
+            horizontal=True
+        )
+        
+        # Choose data based on selected metric
+        if metric == "Peak Cases":
+            Z = peak_Z
+            cmap = 'viridis'
+            title = f'Peak Cases as a Function of {x_param} and {y_param}'
+        elif metric == "Total Infected":
+            Z = total_Z
+            cmap = 'plasma'
+            title = f'Total Infected as a Function of {x_param} and {y_param}'
+        else:  # R₀
+            Z = r0_Z
+            cmap = 'RdYlGn_r'
+            title = f'R₀ as a Function of {x_param} and {y_param}'
+        
+        # Create heatmap
+        fig4, ax4 = plt.subplots(figsize=(10, 8))
+        contour = ax4.contourf(X, Y, Z, 20, cmap=cmap)
+        
+        # Add colorbar
+        cbar = plt.colorbar(contour, ax=ax4)
+        cbar.set_label(metric, fontsize=12)
+        
+        # Add contour line for R0 = 1 if showing R0
+        if metric == "R₀ (Basic Reproduction Number)":
+            r0_contour = ax4.contour(X, Y, Z, levels=[1], colors='white', linestyles='dashed', linewidths=2)
+            ax4.clabel(r0_contour, inline=True, fontsize=10, fmt='R₀=1')
+        
+        # Mark current parameter values if within range
+        current_x = params[x_name]
+        current_y = params[y_name]
+        
+        if (min(x_range) <= current_x <= max(x_range)) and (min(y_range) <= current_y <= max(y_range)):
+            ax4.plot(current_x, current_y, 'ro', markersize=10)
+            ax4.annotate('Current values', xy=(current_x, current_y), xytext=(10, 10),
+                        textcoords='offset points', ha='left', va='bottom',
+                        bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5),
+                        arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=.2'))
+        
+        ax4.set_xlabel(param_configs[x_param]["label"], fontsize=12)
+        ax4.set_ylabel(param_configs[y_param]["label"], fontsize=12)
+        ax4.set_title(title, fontsize=14)
+        
+        st.pyplot(fig4)
+        
+        # Download button for the plot
+        st.download_button(
+            label="Download Parameter Relationship Plot",
+            data=get_image_download_link(fig4),
+            file_name=f"reed_frost_{x_name}_{y_name}_{metric.lower().replace(' ', '_')}.png",
+            mime="image/png"
+        )
+        
+        # Add explanation
+        st.subheader("Parameter Interaction Effects")
+        
+        if (x_name == "p" and y_name == "s0") or (x_name == "s0" and y_name == "p"):
+            st.write("""
+            **Key observations:**
+            
+            The probability of effective contact (P) and the initial susceptible population (S₀) interact to determine R₀ according to the formula R₀ = P × S₀.
+            
+            The white dashed line represents the epidemic threshold where R₀ = 1. Above this line, epidemic growth occurs; below it, the disease dies out.
+            
+            The interaction between these parameters is hyperbolic - as one decreases, the other must increase proportionally to maintain the same R₀ value.
+            
+            **Control implications:**
+            
+            Both reducing contact rates and reducing the susceptible population (e.g., through vaccination) can push a system below the epidemic threshold.
+            
+            The contour map shows that multiple combinations of parameters can achieve the same outcome, allowing for flexible control strategies.
+            """)
+        else:
+            st.write(f"""
+            **Key observations:**
+            
+            This heatmap shows how {metric.lower()} changes as a function of both {x_param.lower()} and {y_param.lower()}.
+            
+            Darker colors indicate conditions more favorable for disease spread, while lighter colors represent conditions less conducive to transmission.
+            
+            The steepness of the gradient indicates the sensitivity of the outcome to changes in each parameter.
+            
+            **Control implications:**
+            
+            Understanding parameter interactions helps identify the most effective combination of interventions.
+            
+            Some parameter combinations may have synergistic effects on reducing disease spread.
+            """)
 
-    ### Key Assumptions:
-    - The population is homogeneously mixed
-    - All cases are equally infectious
-    - The disease has a fixed duration
-    - Recovery from the disease confers immunity
+with tab4:
+    st.header("About the Reed-Frost Model")
     
-    ### The Core Equation:
-    The probability that a susceptible individual escapes infection is:
+    # Create columns for organization
+    col1, col2 = st.columns([3, 2])
     
-    $q = (1 - p)^C$
+    with col1:
+        st.subheader("Model Overview")
+        st.markdown("""
+        The Reed-Frost model is a discrete-time, stochastic chain binomial model of epidemic spread developed by Lowell Reed and Wade Hampton Frost in the 1920s at Johns Hopkins University. It serves as one of the fundamental models in teaching epidemiology and understanding disease transmission dynamics.
+
+        ### Key Assumptions:
+        - The population is homogeneously mixed (everyone has equal probability of contact)
+        - All cases are equally infectious during a fixed infectious period
+        - The disease has a fixed duration (typically one time unit)
+        - Recovery from the disease confers lifetime immunity
+        - The probability of effective contact between individuals is constant
+        
+        ### The Core Equation:
+        The probability that a susceptible individual escapes infection in a given time period is:
+        
+        $q = (1 - p)^C$
+        
+        Where:
+        - $q$ is the probability of escaping infection
+        - $p$ is the probability of effective contact
+        - $C$ is the number of infectious cases
+        
+        The number of new cases in the next time period is:
+        
+        $C_{t+1} = S_t \cdot (1 - q) = S_t \cdot (1 - (1-p)^{C_t})$
+        
+        ### The Basic Reproduction Number (R₀):
+        In the Reed-Frost model, R₀ can be approximated as:
+        
+        $R₀ = p \times S₀$
+        
+        Where:
+        - $p$ is the probability of effective contact
+        - $S₀$ is the initial number of susceptible individuals
+        
+        ### Extensions in This Simulator:
+        This simulator extends the basic Reed-Frost model to include:
+        - Birth rate (B): Adds new susceptible individuals
+        - Immigration rate (I): Adds new susceptible individuals
+        - Death rate (D): Removes individuals from all groups
+        - Disease mortality rate (M): Removes individuals from the infectious group
+        """)
     
-    Where:
-    - $q$ is the probability of escaping infection
-    - $p$ is the probability of effective contact
-    - $C$ is the number of infectious cases
+    with col2:
+        st.subheader("Mathematical Model")
+        st.latex(r'''
+        \begin{align}
+        C_{t+1} &= S_t \cdot (1 - (1-p)^{C_t}) \\
+        S_{t+1} &= S_t - C_{t+1} + B \cdot N_t + I - d \cdot S_t \\
+        R_{t+1} &= R_t + C_t - m \cdot C_t - d \cdot R_t \\
+        N_{t+1} &= S_{t+1} + C_{t+1} + R_{t+1}
+        \end{align}
+        ''')
+        
+        st.subheader("Applications")
+        st.markdown("""
+        The Reed-Frost model is used for:
+        
+        - Teaching basic epidemic concepts
+        - Illustrating herd immunity thresholds
+        - Modeling small population outbreaks
+        - Comparing intervention strategies
+        - Understanding epidemic thresholds
+        
+        **Limitations:**
+        - Assumes homogeneous mixing
+        - Fixed time periods may not match reality
+        - No partial immunity or waning immunity
+        - Simple population structure
+        """)
     
-    ### Extensions in This Simulator:
-    This simulator extends the basic Reed-Frost model to include:
-    - Birth rate (B): Adds new susceptible individuals
-    - Immigration rate (I): Adds new susceptible individuals
-    - Death rate (D): Removes individuals from all groups
-    - Disease mortality rate (M): Removes individuals from the infectious group
+    # Add historical context
+    st.subheader("Historical Context")
+    st.markdown("""
+    Lowell Reed (1886-1966) and Wade Hampton Frost (1880-1938) developed this model while working at Johns Hopkins University School of Hygiene and Public Health in the 1920s. The model was originally used as a teaching tool to illustrate epidemic principles to public health students.
+    
+    Interestingly, Reed and Frost never published their model formally in scientific literature. It was passed down through lectures and teaching materials, becoming a standard tool in epidemiology education.
+    
+    The Reed-Frost model has served as a foundation for more complex epidemic models including SIR (Susceptible-Infected-Recovered) continuous-time models that are widely used today in infectious disease forecasting.
     """)
     
+    # Add comparison with other models
+    st.subheader("Comparison with Other Epidemic Models")
+    
+    # Create comparison table
+    models_comparison = pd.DataFrame({
+        'Model': ['Reed-Frost', 'SIR (Continuous)', 'SEIR', 'Agent-Based'],
+        'Time Scale': ['Discrete (generations)', 'Continuous', 'Continuous', 'Can be either'],
+        'Stochasticity': ['Deterministic in this implementation', 'Deterministic', 'Deterministic', 'Stochastic'],
+        'Population Structure': ['Homogeneous', 'Homogeneous', 'Homogeneous', 'Heterogeneous'],
+        'Key Formula': [
+            'C(t+1) = S(t)[1-(1-p)^C(t)]',
+            'dS/dt = -βSI, dI/dt = βSI-γI',
+            'Adds exposed period (E)',
+            'Individual-level rules'
+        ],
+        'Strengths': [
+            'Simple, intuitive, educational',
+            'Mathematically tractable, continuous time',
+            'Models diseases with incubation period',
+            'Complex heterogeneity, realistic behaviors'
+        ]
+    })
+    
+    st.dataframe(models_comparison)
+    
+    # Add references
+    st.subheader("Key References")
+    st.markdown("""
+    1. Abbey, H. (1952). An examination of the Reed-Frost theory of epidemics. *Human Biology*, 24(3), 201-233.
+    
+    2. Fine, P.E.M. (1977). A commentary on the mechanical analogue to the Reed-Frost epidemic model. *American Journal of Epidemiology*, 106(2), 87-100.
+    
+    3. Anderson, R.M. & May, R.M. (1991). *Infectious Diseases of Humans: Dynamics and Control*. Oxford University Press.
+    
+    4. Hethcote, H.W. (2000). The mathematics of infectious diseases. *SIAM Review*, 42(4), 599-653.
+    """)
+
+# Add footer with resources
+st.markdown("---")
+st.markdown("""
+### Additional Resources:
+- [CDC Principles of Epidemiology](https://www.cdc.gov/csels/dsepd/ss1978/index.html)
+- [WHO Outbreak Investigation Guidelines](https://www.who.int/publications/i/item/9789241565424)
+- [Mathematical Models of Infectious Disease Transmission](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7094367/)
+""")
