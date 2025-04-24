@@ -186,4 +186,5 @@ with tab3:
     - Immigration rate (I): Adds new susceptible individuals
     - Death rate (D): Removes individuals from all groups
     - Disease mortality rate (M): Removes individuals from the infectious group
+    """)
     
