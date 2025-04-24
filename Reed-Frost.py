@@ -124,15 +124,13 @@ results = reed_frost_model(p, c0, s0, b, i, d, m, time_periods)
 
 # Display summary statistics ABOVE the tabs
 st.header("Summary Statistics")
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric("Peak Cases", f"{results['Cases'].max():.2f}")
 with col2:
     st.metric("Time of Peak", f"{results['Cases'].idxmax()} generations")
 with col3:
-    st.metric("Attack Rate", f"{(results['Immune'].iloc[-1] / (s0 + c0)) * 100:.1f}%")
-with col4:
     st.metric("Final Susceptible", f"{results['Susceptible'].iloc[-1]:.2f}")
 
 # Create tabs for different views
@@ -147,18 +145,6 @@ with tab1:
     ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
     ax.plot(results['Time'], results['Immune'], label='Immune', color='green', linewidth=2)
     ax.plot(results['Time'], results['Total'], label='Total Population', color='black', linestyle='--', linewidth=1)
-    
-    # Identify epidemic phases
-    peak_day = results['Cases'].idxmax()
-    early_phase = int(peak_day * 0.3) if peak_day > 0 else 0
-    late_phase = min(len(results) - 1, int(peak_day * 1.7)) if peak_day > 0 else len(results) - 1
-    
-    # Highlight phases with different background colors
-    if peak_day > 0:
-        ax.axvspan(0, early_phase, alpha=0.2, color='green', label='Early Phase')
-        ax.axvspan(early_phase, peak_day, alpha=0.2, color='yellow', label='Growth Phase')
-        ax.axvspan(peak_day, late_phase, alpha=0.2, color='blue', label='Decline Phase')
-        ax.axvspan(late_phase, results['Time'].max(), alpha=0.2, color='purple', label='Late Phase')
     
     ax.set_xlabel('Time (Generations)', fontsize=12)
     ax.set_ylabel('Number of Individuals', fontsize=12)
@@ -557,8 +543,5 @@ with tab4:
     st.write(f"Peak number of cases: {results['Cases'].max():.2f} at time {results['Cases'].idxmax()}")
     st.write(f"Total individuals who became infected: {results['Immune'].iloc[-1] + results['Cases'].iloc[-1]:.2f}")
     st.write(f"Final susceptible population: {results['Susceptible'].iloc[-1]:.2f}")
-    st.write(f"Attack rate: {((results['Immune'].iloc[-1] + results['Cases'].iloc[-1]) / (s0 + c0)) * 100:.2f}%")
     st.write(f"Maximum daily incidence: {np.diff(np.append(0, (results['Immune'] + results['Cases']).values)).max():.2f}")
     st.write(f"Final population size: {results['Total'].iloc[-1]:.2f}")
-
-   
