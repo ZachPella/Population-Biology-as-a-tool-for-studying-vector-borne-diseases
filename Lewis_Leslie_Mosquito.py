@@ -7,7 +7,8 @@ import io
 
 def run():    
     # Display title and description
-    st.title("Leslie Matrix Population Model for Mosquitoes")
+    st.title("🦟 Mosquito Lifecycle Simulation")
+    st.markdown("#### 🌿 Environmental effects on population dynamics")
     st.markdown("""
     This interactive application simulates mosquito population dynamics using a Leslie Matrix model.
     Adjust the parameters using the sliders and see how they affect the population growth.
