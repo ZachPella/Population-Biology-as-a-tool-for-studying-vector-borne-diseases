@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import altair as alt
 import io
 
+# Set page config must be the first Streamlit command
+st.set_page_config(layout="wide")
+
 def run():    
-    # Configure page layout
-    st.set_page_config(layout="wide")
-    
     # Display title and description with academic context
     st.title("🦟 Leslie Matrix Mosquito Population Model")
     st.markdown("#### 🧬 A discrete, age-structured population dynamics simulator")
