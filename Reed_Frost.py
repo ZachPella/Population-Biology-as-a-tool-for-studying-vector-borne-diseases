@@ -161,7 +161,7 @@ def run():
             mime="image/png"
         )
         
-        # Add epidemic curve interpretation
+                # Add epidemic curve interpretation
         st.subheader("Interpretation")
         
         # Calculate key epidemic metrics for interpretation
@@ -176,59 +176,69 @@ def run():
         attack_rate = (final_immune / initial_population) * 100
         
         st.write("""
-        ### Key Phases of the Epidemic Curve
+        ### The Reed-Frost Chain Binomial Model
         
-        **Introduction Phase**: The early period when cases begin to increase. This phase shows how quickly the disease spreads initially from the seed cases.
+        The Reed-Frost model is a discrete-time (generation-based) epidemic model that describes how disease spreads through a population in distinct time periods. The epidemic curve illustrates the core components of the model:
         
-        **Growth Phase**: The period of exponential growth where each case generates multiple new cases. The steepness of this curve indicates the transmission rate.
+        **Susceptible Population (Blue)**: Individuals who have not yet been infected but are capable of becoming infected if they come into contact with the disease.
         
-        **Peak Phase**: The point of maximum active cases (shown in red), occurring at time period {} with {} cases. This represents the maximum burden on healthcare systems.
+        **Active Cases (Red)**: Infected individuals who can transmit the disease to susceptibles. The Reed-Frost model assumes these individuals contact everyone in the population during their infectious period.
         
-        **Decline Phase**: Cases decrease as the susceptible population (blue line) is depleted and more individuals become immune (green line).
+        **Immune Population (Green)**: Individuals who have recovered from infection and acquired immunity, preventing reinfection.
         
-        **Endemic/Extinction Phase**: The final stage where the disease either disappears or reaches a stable, endemic level depending on population dynamics.
-        """.format(peak_time, round(peak_value, 2)))
+        **Key Equation**: $C_{t+1} = S_t \cdot (1 - (1-p)^{C_t})$, where $C_{t+1}$ is new cases in the next time period, $S_t$ is susceptibles in the current time period, $p$ is probability of effective contact, and $C_t$ is current cases.
+        """)
         
         st.write("""
-        ### Epidemic Outcomes
+        ### Dynamics of the Epidemic Curve
         
-        **Attack Rate**: Approximately {}% of the initial population became infected during this epidemic.
+        **Probability of Effective Contact (P={})**: This parameter significantly impacts disease transmission. Higher P values lead to faster spread and larger outbreaks.
         
-        **Duration**: The active epidemic lasted approximately {} generations.
+        **Outbreak Size**: With the current parameters, approximately {}% of the initial population became infected, with peak cases of {} occurring at generation {}.
         
-        **Herd Immunity Threshold**: The point where the epidemic begins to decline occurs when enough of the population has become immune to slow transmission.
+        **Threshold Effects**: The model demonstrates that below certain thresholds of P, epidemics may not occur at all, while higher values cause rapid spread.
         
-        **Final Susceptible Population**: {} individuals remained susceptible, representing potential vulnerability to future outbreaks.
-        """.format(round(attack_rate, 2), epidemic_duration, round(final_susceptible, 2)))
+        **Population Dynamics**: With birth rate (B={}) and immigration (I={}), new susceptibles enter the population, potentially sustaining transmission longer than in a closed population.
+        
+        **Immunity Effects**: As the susceptible population (blue) declines and immune population (green) increases, the epidemic naturally slows due to reduced availability of susceptible individuals.
+        """.format(p, round(attack_rate, 2), round(peak_value, 2), peak_time, b, i))
         
         # Add interpretation based on current parameter values
         if p < 0.05:
-            transmission_text = "The low probability of effective contact (P={}) results in limited disease spread. Each infected person generates fewer than one new case on average, leading to a small outbreak that quickly dies out.".format(p)
+            transmission_text = "At low probability of effective contact (P={:.2f}), each infected individual generates fewer than one new case on average, leading to a small outbreak that quickly dies out.".format(p)
         elif p < 0.2:
-            transmission_text = "The moderate probability of effective contact (P={}) allows for sustained transmission. The epidemic grows steadily before eventually declining as immunity builds in the population.".format(p)
+            transmission_text = "With moderate probability of effective contact (P={:.2f}), the epidemic grows steadily before declining as immunity builds in the population.".format(p)
         else:
-            transmission_text = "The high probability of effective contact (P={}) leads to rapid disease spread. The epidemic grows quickly, reaches a high peak, and affects a large proportion of the susceptible population.".format(p)
+            transmission_text = "With high probability of effective contact (P={:.2f}), disease spreads rapidly, reaches a high peak, and affects a large proportion of the susceptible population.".format(p)
         
         if b > 0 or i > 0:
-            demographic_text = "The addition of new susceptibles through births (B={}) and/or immigration (I={}) impacts the epidemic tail, potentially allowing for prolonged transmission or multiple waves.".format(b, i)
+            demographic_text = "The addition of new susceptibles through births (B={:.2f}) and/or immigration (I={:.2f}) affects the epidemic pattern, potentially allowing for endemic disease to establish or multiple waves to occur.".format(b, i)
         else:
-            demographic_text = "Without new susceptibles entering the population, the epidemic follows a classic single-wave pattern that eventually burns out once sufficient immunity is achieved."
+            demographic_text = "In this closed population (no births or immigration), the epidemic follows a classic single-wave pattern that eventually burns out once sufficient immunity is achieved."
         
         if d > 0 or m > 0:
-            mortality_text = "Population loss through natural deaths (D={}) and/or disease mortality (M={}) reduces both the susceptible and immune populations, affecting the final epidemic size and potentially allowing for resurgence if immunity is lost.".format(d, m)
+            mortality_text = "Population loss through natural deaths (D={:.2f}) and/or disease mortality (M={:.2f}) reduces both susceptible and immune populations, affecting the final epidemic size and potentially allowing for resurgence if immunity is lost.".format(d, m)
         else:
-            mortality_text = "With no population loss, the total population remains constant, and the final state represents the complete redistribution of individuals between susceptible and immune compartments."
+            mortality_text = "With no population loss (no deaths), the total population remains constant, and the final state represents the complete redistribution of individuals between susceptible and immune compartments."
         
         st.write("""
-        ### Impact of Current Parameters
+        ### Control Implications
         
-        **Transmission Dynamics**: {}
+        Based on the Reed-Frost model dynamics illustrated here:
         
-        **Population Dynamics**: {}
+        **{}**
         
-        **Mortality Effects**: {}
+        **{}**
         
-        **Control Implications**: Modify parameters to see how interventions like reducing contact rates (lowering P), vaccination (reducing initial S0), or other measures affect the epidemic curve.
+        **{}**
+        
+        Effective interventions could target:
+        - Reducing probability of effective contact (P) through public health measures
+        - Reducing the susceptible population (S₀) through vaccination
+        - Managing or isolating cases to reduce transmission
+        - Adding demographic controls if births/immigration are sustaining the epidemic
+        
+        The visualization demonstrates how changes in model parameters directly affect both the shape of the epidemic curve and the final disease burden in the population.
         """.format(transmission_text, demographic_text, mortality_text))
         
     with tab2:
