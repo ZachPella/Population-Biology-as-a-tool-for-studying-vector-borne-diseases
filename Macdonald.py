@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import altair as alt
 import io
 import math
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 def run():
   # Display title and description
@@ -108,18 +110,61 @@ def run():
   else:
       critical_daily_survival = 0
   
-  # Display the overall statistics
+  # Display the overall statistics with new gauge visualization
   st.header("Vectorial Capacity Results")
-  col1, col2, col3 = st.columns(3)
+  
+  # Create two columns - gauge on left, metrics on right
+  col1, col2 = st.columns([3, 2])
   
   with col1:
-      st.metric("Vectorial Capacity (C)", f"{vectorial_capacity:.4f}")
+      # Create a gauge visualization for vectorial capacity
+      # Define a reference value (0.587) from the table in images
+      reference_value = 0.587
       
+      # Calculate percent change
+      percent_change = ((vectorial_capacity - reference_value) / reference_value) * 100 if reference_value > 0 else 0
+      
+      # Create a gauge figure
+      fig = go.Figure(go.Indicator(
+          mode="gauge+number+delta",
+          value=vectorial_capacity,
+          delta={'reference': reference_value, 'relative': False, 'valueformat': '.3f'},
+          title={'text': "Vectorial Capacity", 'font': {'size': 24}},
+          gauge={
+              'axis': {'range': [None, max(5, vectorial_capacity * 1.5)]},
+              'bar': {'color': "darkblue"},
+              'bgcolor': "white",
+              'borderwidth': 2,
+              'bordercolor': "gray",
+              'steps': [
+                  {'range': [0, 0.5], 'color': "lightgreen"},
+                  {'range': [0.5, 1], 'color': "yellow"},
+                  {'range': [1, max(5, vectorial_capacity * 1.5)], 'color': "salmon"}
+              ],
+              'threshold': {
+                  'line': {'color': "red", 'width': 4},
+                  'thickness': 0.75,
+                  'value': reference_value
+              }
+          }
+      ))
+      
+      fig.update_layout(
+          height=300,
+          margin=dict(l=20, r=20, t=50, b=20),
+      )
+      
+      st.plotly_chart(fig, use_container_width=True)
+      
+      # Add caption for the gauge
+      st.caption(f"Reference baseline value (red line): {reference_value}")
+      st.caption(f"Current value: {vectorial_capacity:.3f} ({percent_change:+.1f}%)")
+  
   with col2:
+      # Display metrics in vertical stack
+      st.metric("Vectorial Capacity (C)", f"{vectorial_capacity:.4f}")
       st.metric("Basic Reproduction Number (R₀)", f"{r0:.4f}", 
                help="R₀ = Vectorial Capacity × Vector Competence ÷ Human Recovery Rate")
-      
-  with col3:
       st.metric("Critical Daily Survival", f"{critical_daily_survival:.4f}",
                delta=f"{(daily_survival - critical_daily_survival):.4f}", 
                delta_color="normal",
@@ -134,9 +179,130 @@ def run():
       return buf
   
   # Create tabs for different analyses
-  tab1, tab2, tab3, tab4= st.tabs(["Sensitivity Analysis", "Host Preference Impact", "Parameter Relationships", "Data Table"])
+  tab1, tab2, tab3, tab4, tab5 = st.tabs(["Vectorial Capacity", "Sensitivity Analysis", "Host Preference Impact", "Parameter Relationships", "Data Table"])
   
   with tab1:
+      st.header("Parameter Impact on Vectorial Capacity")
+      
+      # Calculate the impact of changing each parameter by ±10%
+      impact_data = {}
+      params = {
+          "Vector:host ratio (m)": {"value": vector_host_ratio, "code": "m"},
+          "Biting rate (a)": {"value": biting_rate, "code": "a"},
+          "Vector competence (b)": {"value": vector_competence, "code": "b"},
+          "Daily survival (p)": {"value": daily_survival, "code": "p"},
+          "EIP (n)": {"value": extrinsic_incubation, "code": "n"}
+      }
+      
+      for param_name, param_info in params.items():
+          # Get baseline values
+          baseline_params = {
+              "m": vector_host_ratio,
+              "a": biting_rate,
+              "b": vector_competence,
+              "p": daily_survival,
+              "n": extrinsic_incubation
+          }
+          
+          # Calculate baseline VC
+          baseline_vc = calculate_vectorial_capacity(
+              baseline_params["m"], baseline_params["a"], 
+              baseline_params["b"], baseline_params["p"], 
+              baseline_params["n"]
+          )
+          
+          # Calculate VC with +10% parameter change
+          increased_params = baseline_params.copy()
+          increased_params[param_info["code"]] *= 1.1
+          increased_vc = calculate_vectorial_capacity(
+              increased_params["m"], increased_params["a"], 
+              increased_params["b"], increased_params["p"], 
+              increased_params["n"]
+          )
+          
+          # Calculate VC with -10% parameter change
+          decreased_params = baseline_params.copy()
+          decreased_params[param_info["code"]] *= 0.9
+          decreased_vc = calculate_vectorial_capacity(
+              decreased_params["m"], decreased_params["a"], 
+              decreased_params["b"], decreased_params["p"], 
+              decreased_params["n"]
+          )
+          
+          # Calculate percent changes
+          pct_change_up = ((increased_vc - baseline_vc) / baseline_vc) * 100 if baseline_vc > 0 else 0
+          pct_change_down = ((decreased_vc - baseline_vc) / baseline_vc) * 100 if baseline_vc > 0 else 0
+          
+          # Store results
+          impact_data[param_name] = {
+              "Current Value": param_info["value"],
+              "+10% Change": f"{pct_change_up:.1f}%",
+              "-10% Change": f"{pct_change_down:.1f}%"
+          }
+      
+      # Create a DataFrame
+      impact_df = pd.DataFrame(impact_data).T.reset_index()
+      impact_df.columns = ["Parameter", "Current Value", "+10% Parameter → %ΔV", "-10% Parameter → %ΔV"]
+      
+      # Display the table with styling
+      st.dataframe(impact_df.style.background_gradient(cmap='RdYlGn', subset=["+10% Parameter → %ΔV"]).background_gradient(cmap='RdYlGn_r', subset=["-10% Parameter → %ΔV"]))
+      
+      # Create bar chart to visualize parameter impact
+      fig_impact = go.Figure()
+      
+      # Extract numeric values from percentage strings
+      plus_values = [float(x.strip('%')) for x in impact_df["+10% Parameter → %ΔV"]]
+      minus_values = [float(x.strip('%')) for x in impact_df["-10% Parameter → %ΔV"]]
+      
+      # Add bars for +10% impact
+      fig_impact.add_trace(go.Bar(
+          x=impact_df["Parameter"],
+          y=plus_values,
+          name="+10% Parameter Change",
+          marker_color='forestgreen'
+      ))
+      
+      # Add bars for -10% impact
+      fig_impact.add_trace(go.Bar(
+          x=impact_df["Parameter"],
+          y=minus_values,
+          name="-10% Parameter Change",
+          marker_color='crimson'
+      ))
+      
+      # Update layout
+      fig_impact.update_layout(
+          title="Impact of ±10% Parameter Changes on Vectorial Capacity",
+          xaxis_title="Parameter",
+          yaxis_title="% Change in Vectorial Capacity",
+          barmode='group',
+          height=500
+      )
+      
+      st.plotly_chart(fig_impact, use_container_width=True)
+      
+      # Explanation of parameter impacts
+      st.subheader("Key Parameter Effects")
+      st.markdown("""
+      **Parameter Impact Analysis:**
+      
+      - **Daily survivorship (p)** has the most dramatic effect on vectorial capacity, showing an exponential relationship
+        (a 10% increase can lead to >200% increase in vectorial capacity in some scenarios)
+      
+      - **Biting rate (a)** has a squared relationship with vectorial capacity
+        (a 10% increase results in approximately 21% increase in vectorial capacity)
+      
+      - **Vector:host ratio (m)** has a linear relationship
+        (a 10% increase results in approximately 10% increase in vectorial capacity)
+      
+      - **Extrinsic Incubation Period (n)** has an inverse relationship
+        (a 10% decrease can increase vectorial capacity)
+      
+      This analysis helps prioritize intervention strategies - targeting parameters with the steepest curves 
+      (like daily survivorship) will have the greatest impact on reducing disease transmission.
+      """)
+  
+  with tab2:
       st.header("Sensitivity Analysis")
       
       # Choose parameter to vary
@@ -275,7 +441,7 @@ def run():
           pathogen biology and environmental conditions, especially temperature.
           """)
   
-  with tab2:
+  with tab3:
       st.header("Host Preference Impact")
       
       # Create range of host preference values
@@ -368,7 +534,7 @@ def run():
       - Community-level protection strategies accounting for vector preference
       """)
   
-  with tab3:
+  with tab4:
       st.header("Parameter Relationships")
       
       # Select parameters for X and Y axes
@@ -512,7 +678,7 @@ def run():
           - The steepness of the gradient indicates sensitivity to parameter changes
           """)
   
-  with tab4:
+  with tab5:
       st.header("Data Table and Calculations")
       
       # Create a table showing current parameter values and calculated results
