@@ -5,47 +5,48 @@ import matplotlib.pyplot as plt
 import altair as alt
 import io
 
-# Set page config must be the first Streamlit command
-st.set_page_config(layout="wide")
-
 def run():    
     # Display title and description with academic context
     st.title("🦟 Leslie Matrix Mosquito Population Model")
     st.markdown("#### 🧬 A discrete, age-structured population dynamics simulator")
-    
-    # Core description and equations in the Reed-Frost style
     st.markdown("""
-    ### Introduction to the Leslie Matrix Model
+    This interactive application simulates mosquito population dynamics using a Leslie Matrix model based on 
+    population biology principles for studying vector and pest populations.
+    Adjust the parameters using the sliders and see how they affect the population growth.
     
-    This interactive application simulates mosquito population dynamics using a Leslie Matrix model as described in Black & Moore's chapter on population biology as a tool for studying vector-borne diseases. Adjust the parameters using the sliders and see how they affect population growth and vectorial capacity.
+    **Definition**: The Leslie Matrix model is a discrete-time, age-structured population model that describes 
+    population growth when age-specific survival rates and reproductive rates can be estimated. It's a fundamental 
+    mathematical tool in population ecology, representing stage transitions and fecundity in a matrix format.
     
-    **Definition**: The Leslie Matrix Model is a discrete-time, age-structured mathematical approach to modeling population growth, with particular relevance to vector populations that transmit diseases. It accounts for stage-specific survival rates and age-dependent reproduction.
+    **Core Concept**: At the heart of the Leslie Matrix model is the projection of current population structure 
+    to future time steps through matrix multiplication. The matrix contains survival probabilities on the sub-diagonal 
+    and fecundity values in the first row.
     
-    **Core Concept**: At the heart of the Leslie Matrix model is tracking individuals through different age classes, with specific survival probabilities and fecundity rates for each class. This structure is crucial for understanding disease transmission because only older female mosquitoes contribute to pathogen spread.
-    """)
-    
-    # Add styled equation block like Reed-Frost
-    st.markdown("""
     **Leslie Matrix Equation**: 
     $n_{t+1} = M × n_{t}$
     
     Where:
-    - $n_{t}$ is the population vector at time t, showing the number of individuals in each age class
-    - $M$ is the Leslie Matrix containing survival probabilities and fecundity values
-    - $n_{t+1}$ is the resulting population vector for the next time step
+    - $n_{t+1}$ is the population vector at the next time step
+    - $M$ is the Leslie Matrix containing survival rates and fecundity values
+    - $n_{t+1}$ is the current population vector by age class
     
-    **The Model's Logic**: 
-    1. Each row of the Leslie Matrix represents an age class
-    2. Survival probabilities appear on the subdiagonal (individuals moving to the next age class)
-    3. Fecundity values appear in the first row (reproduction from adult age classes)
-    4. As the model iterates, it captures both age structure dynamics and population growth
-    5. Eventually, the population reaches a stable age distribution (SAD)
+    **The Model's Logic**:
+    1. Each age class has a specific survival probability to the next age class
+    2. Only certain adult age classes reproduce, with age-specific fecundity
+    3. The population structure changes over time until reaching a stable age distribution
+    4. The matrix eigenvalue determines whether the population grows, shrinks, or stabilizes
+
+     **Parameters:**
+    - **Egg survival rate**: Daily survival probability for eggs in the oothecae (egg cases)
+    - **Nymphal survival rate**: Daily survival probability for nymphs (immature cockroaches)
+    - **Adult survival rate**: Daily survival probability for adult cockroaches
+    - **Initial population**: Starting number of individuals
+    - **Fecundity values**: Number of eggs produced at different adult ages
     """)
     
-    # Add vectorial capacity equation in same style as Reed-Frost
-    st.markdown("""
-    **Vectorial Capacity Equation**:
-    $V = \\frac{ma^2p^n}{-ln(p)}$
+    # Create sidebar with parameters
+    st.sidebar.header("Model Parameters")
+    
     
     Where:
     - $m$ = vector density in relation to hosts
