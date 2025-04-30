@@ -74,42 +74,53 @@ def run():
     ## Introduction to the Leslie Matrix Model
     
     This interactive application simulates mosquito population dynamics using a Leslie Matrix model as described in Black & Moore's chapter on population biology as a tool for studying vector-borne diseases. The model demonstrates how age structure, survivorship, and fecundity affect vectorial capacity - a critical component in disease transmission.
+    """)
     
-    **Definition**: The Leslie Matrix Model is a discrete-time, age-structured mathematical approach to modeling population growth, with particular relevance to vector populations that transmit diseases. It accounts for stage-specific survival rates and age-dependent reproduction.
+    # Add styled equation block like in the images
+    st.markdown("""
+    <div style="background-color: #191D32; padding: 10px; border-radius: 5px;">
+    <h3 style="color: white; margin: 0;">Leslie Matrix Equation: n<sub>t+1</sub> = M × n<sub>t</sub></h3>
+    </div>
+    """, unsafe_allow_html=True)
     
-    **Core Concept**: At the heart of the Leslie Matrix approach is tracking individuals through different age classes over time, with specific survival probabilities and fecundity rates for each age class. This structure is crucial for understanding disease transmission as only older female mosquitoes contribute to pathogen spread.
+    # Add explanation of the terms like in image 2
+    st.markdown("""
+    **Where:**
     
-    **Leslie Matrix Equation**: n\(_t+1\) = M × n\(_t\)
+    * **n<sub>t</sub>** is the population vector at time t, showing the number of individuals in each age class
+    * **M** is the Leslie Matrix containing survival probabilities and fecundity values
+    * **n<sub>t+1</sub>** is the resulting population vector for the next time step
     
-    Where:
-    * n\(_t\) is the population vector at time t, showing the number of individuals in each age class
-    * M is the Leslie Matrix containing survival probabilities and fecundity values
-    * n\(_t+1\) is the resulting population vector for the next time step
+    **The Model's Logic:**
     
-    **The Model's Logic**:
     1. Each row of the Leslie Matrix represents an age class
     2. Survival probabilities appear on the subdiagonal (individuals moving to the next age class)
     3. Fecundity values appear in the first row (reproduction from adult age classes)
     4. As the model iterates, it captures both age structure dynamics and population growth
     5. Eventually, the population reaches a stable age distribution (SAD)
+    """, unsafe_allow_html=True)
     
-    **Vectorial Capacity**: The model connects to disease transmission through vectorial capacity:
+    # Add vectorial capacity equation
+    st.markdown("""
+    <div style="background-color: #191D32; padding: 10px; border-radius: 5px;">
+    <h3 style="color: white; margin: 0;">Vectorial Capacity: V = [ma<sup>2</sup>p<sup>n</sup>]/[-ln(p)]</h3>
+    </div>
+    """, unsafe_allow_html=True)
     
-    V = [ma²p^n]/[-ln(p)]
+    st.markdown("""
+    **Where:**
+    * **m** = vector density in relation to hosts
+    * **a** = biting rate (humans bitten per mosquito per day)
+    * **p** = daily survival rate (especially of adults)
+    * **n** = extrinsic incubation period (days from ingestion to transmission)
     
-    Where:
-    * m = vector density in relation to hosts
-    * a = biting rate (humans bitten per mosquito per day)
-    * p = daily survival rate (especially of adults)
-    * n = extrinsic incubation period (days from ingestion to transmission)
-    
-    **Adjustable Parameters**:
+    **Adjustable Parameters:**
     * Survival rates for each life stage (eggs, larvae, adults)
     * Duration of each life stage
     * Fecundity after each blood meal
     * Initial population size
     * Optional density dependence and immigration
-    """)
+    """, unsafe_allow_html=True)
     
     # Run the Leslie matrix simulation model
     def run_leslie_model(egg_survival, larval_survival, adult_survival, 
@@ -225,9 +236,6 @@ def run():
             percent_larvae[i] = (larvae[i] / total_population[i]) * 100
             percent_adults[i] = (adults[i] / total_population[i]) * 100
     
-    # Summary Statistics
-    col1, col2, col3 = st.columns(3)
-    
     # Calculate vectorial capacity
     extrinsic_incubation = 10  # Days from ingestion to transmission capability
     biting_rate = 0.25  # Bites per vector per day
@@ -240,11 +248,22 @@ def run():
     peak_time = np.argmax(adults)
     growth_rate = 100 * (np.exp(np.log(total_population[-1]/initial_population)/num_days) - 1) if total_population[-1] > 0 and initial_population > 0 else 0
     
+    # Summary Statistics in stylized metrics layout
+    st.markdown("""
+    <div style="background-color: #191D32; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+    <h3 style="color: white; margin: 0;">Summary Statistics</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
         st.metric("Peak Adult Population", f"{int(peak_adults):,}")
     with col2:
         st.metric("Time to Peak", f"{peak_time} days")
     with col3:
+        st.metric("Final Adult Population", f"{int(adults[-1]):,}")
+    with col4:
         st.metric("Vectorial Capacity", f"{vectorial_capacity:.2f}")
     
     # Create tabs for different views
@@ -316,13 +335,15 @@ def run():
         st.markdown("""
         **Population Dynamics Interpretation:**
         
-        The top graph shows population growth over time for each life stage. Note how each stage follows 
-        a different trajectory with time lags between them, reflecting developmental delays. 
+        The population trend graph shows growth patterns across life stages, with:
         
-        The bottom chart shows the stable age distribution (SAD) emerging over time. As described in 
-        Fig 24.11 of Black & Moore, the population eventually reaches a constant proportion of individuals 
-        in each life stage - a key insight from the Leslie Matrix approach. The proportion of adults in this 
-        distribution directly impacts disease transmission potential.
+        * **Time Lags**: Note the phase shifts between egg, larval, and adult populations reflecting developmental delays
+        * **Exponential Growth**: In the absence of density dependence, populations initially grow exponentially
+        * **Cyclical Patterns**: Adult reproduction creates pulsed egg-laying events that propagate through the age structure
+        * **Stable Distribution**: The proportion of each life stage eventually stabilizes into the Stable Age Distribution (SAD)
+        
+        These patterns directly affect vectorial capacity since only older adults that survive through the extrinsic incubation 
+        period can transmit disease.
         """)
         
     with tab2:
@@ -455,14 +476,16 @@ def run():
             
             # Concise interpretation
             st.markdown("""
-            **Age Structure Interpretation:**
+            **Age Structure × Survivorship Interactions**
             
-            The horizontal bar chart represents the detailed age structure (n vector in Fig 24.8 of Black & Moore). 
-            Red bars indicate reproductive ages when females take blood meals, showing the key reproductive age classes.
+            The age structure visualization reveals several key insights about vector population dynamics:
             
-            The survival curve represents a Type II survivorship pattern with relatively constant mortality rates 
-            across age classes, typical for many mosquito species. This pattern strongly influences vectorial capacity 
-            as it determines how many mosquitoes survive through the extrinsic incubation period.
+            * **Reproductive Bottlenecks**: Red bars highlight reproductive age classes (days 12, 17, 22, 27) when females take blood meals, showing only ~15% of adults reach reproductive age
+            * **Survival Thresholds**: The survival curve demonstrates that a Type II survivorship pattern (constant mortality) allows prediction of how many mosquitoes will survive through the extrinsic incubation period
+            * **Transmission Implications**: Only adults surviving beyond the extrinsic incubation period (typically 10-14 days post-emergence) contribute to disease transmission
+            * **Control Targeting**: The age structure reveals optimal timing for control interventions - targeting adults just before reproductive peaks creates disproportionate population impacts
+            
+            This analysis demonstrates why adult daily survival rate (p) is the most sensitive parameter in vectorial capacity calculations, as small changes in p dramatically affect the proportion of vectors living long enough to transmit disease.
             """)
             
         else:
@@ -576,16 +599,19 @@ def run():
         
         # Concise interpretation
         st.markdown("""
-        **Vectorial Capacity Insights:**
+        **Vectorial Capacity × Control Strategy Interactions**
         
-        The top graph shows that vectorial capacity is extremely sensitive to adult survival rate (p), 
-        with small changes causing dramatic effects. This confirms Table 24.1 from Black & Moore that 
-        shows p is the most influential parameter in disease transmission.
+        The vectorial capacity analysis reveals critical relationships between mosquito population parameters and disease transmission:
         
-        The control strategy comparison demonstrates why adult control (reducing adult survival) has a more 
-        immediate impact on disease transmission than larval control. Adult control directly affects both 
-        the p^n term and the 1/(-ln p) term in Macdonald's equation, creating a non-linear reduction in 
-        vectorial capacity.
+        * **Exponential p Effect**: A small increase in daily survival (p) from 0.8 to 0.9 causes a ~240% increase in vectorial capacity, demonstrating why adult control is highly effective
+        * **Nonlinear Response**: The p^n term in the vectorial capacity equation creates an exponential relationship that accelerates as p approaches 1.0
+        * **Comparative Control Efficacy**: Adult control (reducing p) shows immediate impact while larval control (reducing future adults) has delayed effects with similar long-term outcomes
+        * **Intervention Thresholds**: The graphs identify critical survival thresholds where vectorial capacity drops below 1.0, preventing disease maintenance
+        
+        **Control Implications:**
+        * Adulticidal measures targeting survival rate provide the most immediate reduction in disease transmission
+        * Integrated strategies combining both adult and larval control achieve complementary effects
+        * The nonlinear relationship between p and vectorial capacity means even modest reductions in adult survival yield substantial epidemiological benefits
         """)
         
         # Create table with vectorial capacity components
