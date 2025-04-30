@@ -234,25 +234,6 @@ def run():
         else:
             mortality_text = "With no population loss (no deaths), the total population remains constant, and the final state represents the complete redistribution of individuals between susceptible and immune compartments."
         
-        st.write("""
-        ### Control Implications
-        
-        Based on the Reed-Frost model dynamics illustrated here:
-        
-        **{}**
-        
-        **{}**
-        
-        **{}**
-        
-        Effective interventions could target:
-        - Reducing probability of effective contact (P) through public health measures
-        - Reducing the susceptible population (S₀) through vaccination
-        - Managing or isolating cases to reduce transmission
-        - Adding demographic controls if births/immigration are sustaining the epidemic
-        
-        The visualization demonstrates how changes in model parameters directly affect both the shape of the epidemic curve and the final disease burden in the population.
-        """.format(transmission_text, demographic_text, mortality_text))
         
     with tab2:
         st.header("Sensitivity Analysis")
