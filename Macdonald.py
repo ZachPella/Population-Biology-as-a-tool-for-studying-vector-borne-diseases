@@ -1,12 +1,5 @@
-try:
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    PLOTLY_AVAILABLE = False
-    st.error("Plotly is not installed. Some visualizations will not be available. Please add plotly to your requirements.txt file.")
 
-
+# First import streamlit
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -14,6 +7,15 @@ import matplotlib.pyplot as plt
 import altair as alt
 import io
 import math
+
+# Then try to import plotly
+try:
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    st.error("Plotly is not installed. Some visualizations will not be available. Please add plotly to your requirements.txt file.")
 
 
 def run():
