@@ -728,7 +728,7 @@ def run():
           
           ax3.set_xlabel(param_configs[x_param]["label"], fontsize=12)
           ax3.set_ylabel(param_configs[y_param]["label"], fontsize=12)
-          ax3.set_title(f'Vectorial Capacity as a Function of {x_param} and {y_param}', fontsize=14)
+          ax3.set_title(f'Vectorial Capacity as a Function of {x_param} and {y_param}', fontsize=10)
           
           st.pyplot(fig3)
           
