@@ -387,8 +387,6 @@ def run():
             - At high P values (>0.5), the epidemic curve shifts left, reaching peak faster
             - The final size of the epidemic is highly sensitive to even small changes in P
             
-            **Control implications**: Reducing the probability of effective contact is one of the most powerful intervention strategies. Each 10% reduction in P yields a proportionally larger reduction in total cases. Public health measures that lower contact probability (physical distancing, masks, hand hygiene) can dramatically change epidemic outcomes even if they don't completely stop transmission.
-            
             **Mathematical insight**: The nonlinear relationship between P and total cases emerges from the compounding effect of multiple generations of transmission. Small reductions in P are amplified over successive infection cycles.
             """)
         elif param_name == "c0":
@@ -402,9 +400,7 @@ def run():
             - Final epidemic size remains nearly constant regardless of C0, provided P is sufficient for epidemic spread
             - In deterministic models, even a single case (C0=1) will cause an epidemic if P is above threshold
             - The timing shift occurs because more initial cases create more infections in the first generation
-            
-            **Control implications**: Early case detection and isolation can delay the epidemic peak, buying valuable time for implementing other control measures or developing vaccines. However, reducing initial cases alone is not sufficient to substantially change the final epidemic size unless combined with interventions that reduce P or S0.
-            
+                        
             **Mathematical insight**: The Reed-Frost equation shows that timing shifts occur because a larger C0 value increases the initial force of infection $(1-(1-P)^{C_t})$, but the overall epidemic trajectory follows similar dynamics once established.
             """)
         elif param_name == "s0":
@@ -418,9 +414,7 @@ def run():
             - Peak height increases proportionally with S0
             - The shape of the epidemic curve remains similar, just scaled by population size
             - Time to peak is only slightly affected by S0 (larger populations peak marginally later)
-            
-            **Control implications**: Reducing the susceptible population through vaccination or creating protected subpopulations is highly effective. The relationship is approximately linear - protecting 50% of the population through vaccination reduces the epidemic size by roughly 50%. This creates a "herd immunity" effect that can protect even unvaccinated individuals by reducing transmission opportunities.
-            
+                        
             **Mathematical insight**: In the Reed-Frost equation, S0 appears as a direct multiplier of new cases. However, the actual fraction of susceptibles who become infected depends on the probability of effective contact (P) and the overall population dynamics.
             """)
         elif param_name == "b":
@@ -434,9 +428,7 @@ def run():
             - As B increases, the tail of the epidemic curve extends, creating potential for multiple waves
             - At high enough birth rates, a steady endemic state may establish
             - New susceptibles extend the duration of the epidemic rather than increasing its peak height
-            
-            **Control implications**: In populations with high birth rates (e.g., many low-income countries), continuous control measures are needed even after the initial epidemic wave. Vaccination programs must be sustained to protect new susceptible cohorts, or endemic transmission may establish. This explains why elimination efforts must be particularly intensive in high-birth-rate settings.
-            
+                        
             **Mathematical insight**: When birth rate is incorporated, the Reed-Frost model can demonstrate oscillatory behavior or steady endemic states similar to what's seen in real-world endemic diseases like measles, which show periodic epidemic cycles driven by the accumulation of new susceptible individuals.
             """)
         elif param_name == "i":
@@ -450,9 +442,7 @@ def run():
             - Unlike birth rate which scales with population size, immigration is typically modeled as a constant inflow
             - Even low immigration rates can prevent epidemic burnout if P is sufficient
             - Immigration can trigger new epidemic waves after an initial wave has subsided
-            
-            **Control implications**: Border screening, traveler quarantine, or targeted vaccination of immigrants/travelers may be necessary to prevent reintroduction of disease. In geographically isolated areas (islands, remote communities), controlling immigration of infected individuals can be an effective strategy when elimination is the goal.
-            
+                        
             **Mathematical insight**: Immigration differs from birth rate in that immigrants can enter already infected, creating new transmission chains even in largely immune populations. This makes immigration particularly important in metapopulation models that consider connected geographic regions.
             """)
         elif param_name == "d":
@@ -466,9 +456,7 @@ def run():
             - Death reduces the number of susceptibles, potentially limiting epidemic size
             - However, deaths also remove immune individuals, potentially increasing vulnerability to subsequent waves
             - The overall effect depends on the interaction between death rate and other demographic parameters
-            
-            **Control implications**: In populations with high turnover (high birth and death rates), immunity from previous epidemics wanes more quickly at the population level, even if individual immunity is lifelong. This demographic turnover means that epidemic cycles may occur more frequently than in populations with lower turnover rates.
-            
+                        
             **Mathematical insight**: Death rate creates a flow out of all compartments, while birth/immigration create flows into the susceptible compartment. The balance between these flows determines whether the epidemic is single-wave, endemic, or cyclic.
             """)
         elif param_name == "m":
@@ -482,9 +470,7 @@ def run():
             - Higher disease mortality can slightly reduce transmission by shortening the infectious period
             - The effect on epidemic dynamics is usually small unless M is very high
             - Disease mortality primarily affects public health impact rather than transmission dynamics
-            
-            **Control implications**: While reducing disease mortality is a critical public health goal, interventions focused solely on reducing fatality (without affecting transmission) may have limited impact on epidemic spread. However, disease mortality indirectly affects transmission if it leads to behavior changes or public health responses that reduce contact rates.
-            
+                        
             **Mathematical insight**: In the Reed-Frost model, disease mortality affects how many cases move from the infected to removed compartment due to death rather than recovery. This parameter is particularly important for diseases like Ebola with high case fatality rates, where mortality can significantly affect transmission dynamics.
             """)
         else:
@@ -497,9 +483,7 @@ def run():
             - Changes in this parameter create nonlinear effects in epidemic outcomes
             - The relationship shown in the graph demonstrates potential thresholds or tipping points
             - Both peak timing and final size are affected
-            
-            **Control implications**: Understanding how this parameter influences disease spread helps design targeted interventions that can efficiently mitigate outbreaks. By identifying which parameters have the strongest effect on outcomes, public health officials can prioritize the most effective control strategies.
-            
+                        
             **Mathematical insight**: The Reed-Frost model demonstrates how even simple epidemic models can exhibit complex behaviors due to the interactions between parameters. This underscores the importance of sensitivity analysis in understanding epidemic dynamics.
             """)
     
@@ -665,17 +649,8 @@ def run():
             
                 - The basic reproductive number (R₀) in the Reed-Frost model is related to both P and S₀
                 - The threshold effect occurs when P reaches a value where each case generates at least one new case on average
-                - The contour lines on the heatmap represent combinations of P and S₀ that produce equal epidemic sizes
-            
-                **Control implications:**
-            
-                This parameter interaction provides multiple approaches to disease control:
-            
-                - Intervention strategies can target either parameter or both simultaneously
-                - Vaccination reduces S₀ while social distancing reduces P, creating a complementary effect
-                - The contour map reveals that a moderate reduction in both parameters may be more achievable than a large reduction in either one alone
-                - In large populations (high S₀), even small increases in P can push a disease over the epidemic threshold
-                """)
+                - The contour lines on the heatmap represent combinations of P and S₀ that produce equal epidemic sizes""")
+                    
             elif (x_name == "p" and y_name == "c0") or (x_name == "c0" and y_name == "p"):
                 st.write("""
                 ### Probability of Effective Contact (P) × Initial Cases (C₀)
@@ -695,17 +670,8 @@ def run():
             
                 - The initial force of infection $(1-(1-P)^{C_0})$ increases nonlinearly with C₀
                 - At low P values, multiple initial cases are needed to overcome stochastic extinction
-                - At high P values, the term $(1-P)^{C_t}$ quickly approaches zero even with small C₀
-            
-                **Control implications:**
-            
-                These interactions inform early epidemic response strategies:
-            
-                - When P is near the epidemic threshold, aggressive case finding and isolation can prevent an epidemic
-                - When P is well above threshold, resources may be better allocated to reducing contact rates than finding every case
-                - Early detection systems provide the greatest benefit when P can simultaneously be reduced through control measures
-                - The effectiveness of travel restrictions or border controls depends on both the number of imported cases and the local contact rates
-                """)
+                - At high P values, the term $(1-P)^{C_t}$ quickly approaches zero even with small C₀""")
+                    
             elif (x_name == "b" and y_name == "p") or (x_name == "p" and y_name == "b"):
                 st.write("""
                 ### Birth Rate (B) × Probability of Effective Contact (P)
@@ -725,17 +691,8 @@ def run():
             
                 - Birth rate determines the inflow of new susceptibles, which can prevent the susceptible population from being depleted
                 - Endemic equilibrium occurs when new infections balance new susceptibles entering the population
-                - The interplay between P and B determines whether R₀ remains above 1 in the long term
-            
-                **Control implications:**
-            
-                This interaction has important implications for long-term disease management:
-            
-                - In high birth rate settings, maintaining control measures for longer periods may be necessary
-                - Vaccination programs must account for the rate of new susceptibles entering the population
-                - Reducing P has a more immediate effect, while managing birth-related susceptible inflow affects long-term dynamics
-                - Many real-world childhood diseases (measles, chickenpox) persist as endemic diseases due precisely to this interaction
-                """)
+                - The interplay between P and B determines whether R₀ remains above 1 in the long term""")
+                    
             elif (x_name == "b" and y_name == "d") or (x_name == "d" and y_name == "b"):
                 st.write("""
                 ### Birth Rate (B) × Death Rate (D)
@@ -755,17 +712,7 @@ def run():
             
                 - The difference (B-D) determines net population growth
                 - Population turnover (min(B,D)) affects how quickly the population composition changes
-                - In a growing population, the effective reproduction number may increase over time as susceptibles accumulate
-            
-                **Control implications:**
-            
-                Demographic parameters influence long-term disease management:
-            
-                - In populations with high turnover, maintaining high vaccination coverage is essential
-                - Endemic diseases may persist more easily in populations with high birth rates
-                - The demographic profile of a population should inform the intensity and duration of control measures
-                - Age-structured interventions become particularly important when birth and death rates create specific population age structures
-                """)
+                - In a growing population, the effective reproduction number may increase over time as susceptibles accumulate""")
             else:
                 st.write(f"""
                 ### {x_param} × {y_param} Interaction
@@ -785,17 +732,7 @@ def run():
             
                 - Disease transmission is inherently nonlinear, creating complex parameter interactions
                 - Some parameter combinations create compensatory effects, where changes in one parameter can offset changes in another
-                - The contour lines represent sets of parameter values that yield equal epidemic outcomes
-            
-                **Control implications:**
-            
-                Understanding these interactions improves intervention planning:
-            
-                - Targeting multiple parameters simultaneously may be more efficient than focusing on a single aspect
-                - The steepest gradient indicates which parameter would provide the greatest benefit if modified
-                - When resources are limited, the heatmap helps identify the most efficient parameter combinations to target
-                - Real-world control programs should consider these interaction effects when designing multi-faceted interventions
-        """)
+                - The contour lines represent sets of parameter values that yield equal epidemic outcomes""")
     with tab4:
         st.header("Data Table")
         
