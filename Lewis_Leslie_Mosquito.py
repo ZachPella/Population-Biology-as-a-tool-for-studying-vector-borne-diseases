@@ -6,77 +6,112 @@ import altair as alt
 import io
 
 def run():    
+    # Configure page layout
+    st.set_page_config(layout="wide")
+    
     # Display title and description with academic context
     st.title("🦟 Leslie Matrix Mosquito Population Model")
-    st.markdown("#### 🌡️ A discrete, age-structured model of mosquito population growth and vectorial capacity")
+    st.markdown("#### 🧬 A discrete, age-structured population dynamics simulator")
     
-    # Create sidebar with parameters
+    # Create sidebar with ALL parameters
     st.sidebar.header("Model Parameters")
     
-    # Create columns for parameter organization
-    col1, col2 = st.columns(2)
+    # Life Stage Durations in sidebar
+    st.sidebar.subheader("Life Stage Durations")
+    egg_stage_duration = st.sidebar.slider("Egg stage duration (days)", 1, 10, 2, 
+                                  help="Duration of egg development before hatching")
+    larval_stage_duration = st.sidebar.slider("Larval stage duration (days)", 1, 20, 10, 
+                                      help="Duration of larval and pupal stages before emerging as adults")
     
-    with col1:
-        st.subheader("Life Stage Durations")
-        egg_stage_duration = st.slider("Egg stage duration (days)", 1, 10, 2, 
-                                    help="Duration of egg development before hatching")
-        larval_stage_duration = st.slider("Larval stage duration (days)", 1, 20, 10, 
-                                        help="Duration of larval and pupal stages before emerging as adults")
-        
-        st.subheader("Survival Rates")
-        egg_survival = st.slider("Egg daily survival rate", 0.0, 1.0, 0.5, 0.01, 
-                                help="Daily probability an egg survives (Table 24.2: typically 0.4-0.6)")
-        larval_survival = st.slider("Larval daily survival rate", 0.0, 1.0, 0.6, 0.01,
-                                   help="Daily probability a larva survives")
-        adult_survival = st.slider("Adult daily survival rate", 0.0, 1.0, 0.9, 0.01, 
-                                  help="Daily probability an adult survives (typically 0.8-0.95)")
+    # Survival Rates in sidebar
+    st.sidebar.subheader("Survival Rates")
+    egg_survival = st.sidebar.slider("Egg daily survival rate", 0.0, 1.0, 0.5, 0.01, 
+                              help="Daily probability an egg survives (Table 24.2: typically 0.4-0.6)")
+    larval_survival = st.sidebar.slider("Larval daily survival rate", 0.0, 1.0, 0.6, 0.01,
+                                 help="Daily probability a larva survives")
+    adult_survival = st.sidebar.slider("Adult daily survival rate", 0.0, 1.0, 0.9, 0.01, 
+                                help="Daily probability an adult survives (typically 0.8-0.95)")
     
-    with col2:
-        st.subheader("Population Parameters")
-        initial_population = st.number_input("Initial population (adults)", 1, 10000, 100, 
-                                           help="Starting population of adult mosquitoes")
-        num_days = st.slider("Simulation length (days)", 30, 365, 100, 
-                           help="Length of simulation in days")
-        
-        st.subheader("Fecundity Values")
-        fecundity_1 = st.number_input("Fecundity after first blood meal (day 12)", 0, 500, 120, 
-                                     help="Eggs produced after first blood meal")
-        fecundity_2 = st.number_input("Fecundity after second blood meal (day 17)", 0, 500, 100, 
-                                     help="Eggs produced after second blood meal")
-        fecundity_3 = st.number_input("Fecundity after third blood meal (day 22)", 0, 500, 80, 
-                                     help="Eggs produced after third blood meal")
-        fecundity_4 = st.number_input("Fecundity after fourth blood meal (day 27)", 0, 500, 60, 
-                                     help="Eggs produced after fourth blood meal")
+    # Population Parameters in sidebar
+    st.sidebar.subheader("Population Parameters")
+    initial_population = st.sidebar.number_input("Initial population (adults)", 1, 10000, 100, 
+                                         help="Starting population of adult mosquitoes")
+    num_days = st.sidebar.slider("Simulation length (days)", 30, 365, 100, 
+                         help="Length of simulation in days")
+    
+    # Fecundity Values in sidebar
+    st.sidebar.subheader("Fecundity Values")
+    fecundity_1 = st.sidebar.number_input("Fecundity after first blood meal (day 12)", 0, 500, 120, 
+                                   help="Eggs produced after first blood meal")
+    fecundity_2 = st.sidebar.number_input("Fecundity after second blood meal (day 17)", 0, 500, 100, 
+                                   help="Eggs produced after second blood meal")
+    fecundity_3 = st.sidebar.number_input("Fecundity after third blood meal (day 22)", 0, 500, 80, 
+                                   help="Eggs produced after third blood meal")
+    fecundity_4 = st.sidebar.number_input("Fecundity after fourth blood meal (day 27)", 0, 500, 60, 
+                                   help="Eggs produced after fourth blood meal")
     
     # Advanced features in sidebar
-    st.sidebar.subheader("Model Features")
+    st.sidebar.subheader("Advanced Model Features")
     enable_density_dependence = st.sidebar.checkbox("Enable Density Dependence", False, 
-                                                  help="Implement logistic growth (Fig 24.5)")
+                                            help="Implement logistic growth (Fig 24.5)")
     if enable_density_dependence:
         carrying_capacity = st.sidebar.number_input("Carrying Capacity (K)", 100, 1000000, 50000, 
-                                                 help="Maximum sustainable population size")
-    
+                                           help="Maximum sustainable population size")
+    else:
+        carrying_capacity = 50000
+        
     enable_immigration = st.sidebar.checkbox("Enable Immigration & Mortality", False, 
-                                           help="Allow immigration/emigration (Fig 24.3)")
+                                     help="Allow immigration/emigration (Fig 24.3)")
     if enable_immigration:
         immigration_rate = st.sidebar.slider("Immigration rate (adults per 2 days)", 0, 100, 10)
         mortality_rate = st.sidebar.slider("Mortality rate (fraction leaving)", 0.0, 1.0, 0.1)
+    else:
+        immigration_rate = 10
+        mortality_rate = 0.1
     
-    # Add concise explanation of model
-    with st.expander("About Leslie Matrices & Vectorial Capacity"):
-        st.markdown("""
-        **Leslie Matrix Model**: A discrete, age-structured model representing population dynamics by tracking individuals through life stages.
-        
-        **Vectorial Capacity**: The average number of potentially infective bites delivered by vector mosquitoes per host per day.
-        
-        **Key Concepts from Black & Moore**:
-        - The Leslie Matrix approach models age-dependent survival and reproduction
-        - Only adult females that have survived the extrinsic incubation period contribute to disease transmission
-        - Small changes in daily survivorship (p) have dramatic effects on vectorial capacity
-        - Final population structure (proportion of each life stage) eventually stabilizes into a Stable Age Distribution (SAD)
-        """)
+    # Introduction to the Leslie Matrix Model on the main page
+    st.markdown("""
+    ## Introduction to the Leslie Matrix Model
     
-    # Model code remains largely the same
+    This interactive application simulates mosquito population dynamics using a Leslie Matrix model as described in Black & Moore's chapter on population biology as a tool for studying vector-borne diseases. The model demonstrates how age structure, survivorship, and fecundity affect vectorial capacity - a critical component in disease transmission.
+    
+    **Definition**: The Leslie Matrix Model is a discrete-time, age-structured mathematical approach to modeling population growth, with particular relevance to vector populations that transmit diseases. It accounts for stage-specific survival rates and age-dependent reproduction.
+    
+    **Core Concept**: At the heart of the Leslie Matrix approach is tracking individuals through different age classes over time, with specific survival probabilities and fecundity rates for each age class. This structure is crucial for understanding disease transmission as only older female mosquitoes contribute to pathogen spread.
+    
+    **Leslie Matrix Equation**: n\(_t+1\) = M × n\(_t\)
+    
+    Where:
+    * n\(_t\) is the population vector at time t, showing the number of individuals in each age class
+    * M is the Leslie Matrix containing survival probabilities and fecundity values
+    * n\(_t+1\) is the resulting population vector for the next time step
+    
+    **The Model's Logic**:
+    1. Each row of the Leslie Matrix represents an age class
+    2. Survival probabilities appear on the subdiagonal (individuals moving to the next age class)
+    3. Fecundity values appear in the first row (reproduction from adult age classes)
+    4. As the model iterates, it captures both age structure dynamics and population growth
+    5. Eventually, the population reaches a stable age distribution (SAD)
+    
+    **Vectorial Capacity**: The model connects to disease transmission through vectorial capacity:
+    
+    V = [ma²p^n]/[-ln(p)]
+    
+    Where:
+    * m = vector density in relation to hosts
+    * a = biting rate (humans bitten per mosquito per day)
+    * p = daily survival rate (especially of adults)
+    * n = extrinsic incubation period (days from ingestion to transmission)
+    
+    **Adjustable Parameters**:
+    * Survival rates for each life stage (eggs, larvae, adults)
+    * Duration of each life stage
+    * Fecundity after each blood meal
+    * Initial population size
+    * Optional density dependence and immigration
+    """)
+    
+    # Run the Leslie matrix simulation model
     def run_leslie_model(egg_survival, larval_survival, adult_survival, 
                         initial_pop, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
                         num_days, egg_stage_duration, larval_stage_duration,
@@ -163,9 +198,8 @@ def run():
         egg_survival, larval_survival, adult_survival, 
         initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
         num_days, egg_stage_duration, larval_stage_duration,
-        enable_density_dependence, carrying_capacity if enable_density_dependence else 50000,
-        enable_immigration, immigration_rate if enable_immigration else 10, 
-        mortality_rate if enable_immigration else 0.1
+        enable_density_dependence, carrying_capacity,
+        enable_immigration, immigration_rate, mortality_rate
     )
     
     # Process results for visualization
@@ -191,17 +225,8 @@ def run():
             percent_larvae[i] = (larvae[i] / total_population[i]) * 100
             percent_adults[i] = (adults[i] / total_population[i]) * 100
     
-    # Create a DataFrame for the summary data
-    summary_df = pd.DataFrame({
-        'Day': days,
-        'Eggs': eggs,
-        'Larvae': larvae,
-        'Adults': adults,
-        'Total': total_population,
-        '%Eggs': percent_eggs,
-        '%Larvae': percent_larvae,
-        '%Adults': percent_adults
-    })
+    # Summary Statistics
+    col1, col2, col3 = st.columns(3)
     
     # Calculate vectorial capacity
     extrinsic_incubation = 10  # Days from ingestion to transmission capability
@@ -210,40 +235,28 @@ def run():
     
     vectorial_capacity = adults[-1] * (adult_survival ** extrinsic_incubation) * biting_rate**2 * vector_competence / (-np.log(adult_survival))
     
-    # Display the overall statistics - now showing key metrics first
-    st.header("Population and Epidemiological Summary")
+    # Calculate key metrics
+    peak_adults = np.max(adults)
+    peak_time = np.argmax(adults)
+    growth_rate = 100 * (np.exp(np.log(total_population[-1]/initial_population)/num_days) - 1) if total_population[-1] > 0 and initial_population > 0 else 0
     
-    # Show key metrics in compact way
-    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Final Population", f"{int(total_population[-1]):,}")
+        st.metric("Peak Adult Population", f"{int(peak_adults):,}")
     with col2:
-        st.metric("Adult Mosquitoes", f"{int(adults[-1]):,}")
+        st.metric("Time to Peak", f"{peak_time} days")
     with col3:
         st.metric("Vectorial Capacity", f"{vectorial_capacity:.2f}")
-    with col4:
-        daily_growth = 100 * (np.exp(np.log(total_population[-1]/initial_population)/num_days) - 1)
-        st.metric("Daily Growth Rate", f"{daily_growth:.1f}%")
-    
-    # Helper function to convert figure to downloadable data
-    def fig_to_bytes(fig):
-        """Convert a matplotlib figure to bytes for downloading"""
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-        buf.seek(0)
-        return buf
     
     # Create tabs for different views
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "Population Trends", 
-        "Stage Distribution", 
         "Age Structure", 
         "Vectorial Capacity",
         "Data Table"
     ])
     
     with tab1:
-        # PLOT FIRST, THEN ANALYSIS - Population trend plot
+        # Population trends plot and analysis
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         ax1.plot(days, eggs, label='Eggs', color='#f7d060', linewidth=2)
         ax1.plot(days, larvae, label='Larvae', color='#ff6e40', linewidth=2)
@@ -263,46 +276,10 @@ def run():
         
         st.pyplot(fig1)
         
-        # Streamlit download button
-        st.download_button(
-            label="Download Population Trends Plot",
-            data=fig_to_bytes(fig1),
-            file_name="mosquito_population_trends.png",
-            mime="image/png"
-        )
+        # Stage distribution chart
+        st.subheader("Life Stage Distribution Over Time")
         
-        # CONCISE INTERPRETATION
-        st.markdown("""
-        **Key Observations:**
-        
-        This graph shows the exponential growth patterns typical of vector populations. Note the time lag between 
-        peaks in eggs, larvae, and adults, reflecting developmental delays that determine transmission potential.
-        When density dependence is enabled, the population eventually approaches carrying capacity (K) as described
-        in the logistic growth model (Equation 15) from Black & Moore.
-        """)
-        
-        # Show daily growth rate plot more concisely
-        fig2, ax2 = plt.subplots(figsize=(10, 4))
-        growth_rates = np.zeros(num_days)
-        for i in range(1, num_days):
-            growth_rates[i] = (total_population[i] / total_population[i-1] - 1) * 100 if total_population[i-1] > 0 else 0
-        
-        ax2.plot(days[1:], growth_rates[1:], color='#2ca02c', linewidth=2)
-        ax2.axhline(y=0, color='r', linestyle='--', alpha=0.5)
-        ax2.set_xlabel('Day', fontsize=12)
-        ax2.set_ylabel('Growth Rate (%)', fontsize=12)
-        ax2.set_title('Daily Population Growth Rate', fontsize=14)
-        ax2.grid(True, alpha=0.3)
-        
-        st.pyplot(fig2)
-        
-        st.markdown(f"""
-        The mean daily growth rate is {np.mean(growth_rates[1:]):.2f}%. The oscillations reflect
-        pulsed reproduction following blood meals, similar to Fig 24.3 in Black & Moore.
-        """)
-    
-    with tab2:
-        # PLOT FIRST - Stable age distribution
+        # Create stacked area chart for stage proportions
         chart_data = pd.DataFrame({
             'Day': days,
             'Eggs': eggs,
@@ -335,41 +312,20 @@ def run():
         
         st.altair_chart(chart, use_container_width=True)
         
-        # Create a pie chart for the final day
-        fig3, ax3 = plt.subplots(figsize=(8, 8))
-        final_values = [eggs[-1], larvae[-1], adults[-1]]
-        labels = ['Eggs', 'Larvae', 'Adults']
-        colors = ['#f7d060', '#ff6e40', '#5d5d5d']
+        # Concise interpretation
+        st.markdown("""
+        **Population Dynamics Interpretation:**
         
-        # Only include non-zero values in the pie chart
-        non_zero_indices = [i for i, val in enumerate(final_values) if val > 0]
-        if non_zero_indices:
-            wedges, texts, autotexts = ax3.pie(
-                [final_values[i] for i in non_zero_indices], 
-                labels=[labels[i] for i in non_zero_indices],
-                autopct='%1.1f%%', 
-                colors=[colors[i] for i in non_zero_indices], 
-                startangle=90,
-                shadow=True
-            )
-            for autotext in autotexts:
-                autotext.set_fontsize(12)
-                autotext.set_weight('bold')
-                
-            ax3.set_title(f'Population Composition on Day {num_days}', fontsize=14)
-            st.pyplot(fig3)
-            
-            # CONCISE INTERPRETATION
-            st.markdown(f"""
-            **Stable Age Distribution (SAD):**
-            
-            As shown in Fig 24.11 of Black & Moore, mosquito populations eventually reach a stable proportion of 
-            individuals in each life stage. This final distribution is critical for disease transmission since only 
-            older adults that have survived the extrinsic incubation period can transmit disease. The SAD is determined 
-            by the survival rates and stage durations.
-            """)
-    
-    with tab3:
+        The top graph shows population growth over time for each life stage. Note how each stage follows 
+        a different trajectory with time lags between them, reflecting developmental delays. 
+        
+        The bottom chart shows the stable age distribution (SAD) emerging over time. As described in 
+        Fig 24.11 of Black & Moore, the population eventually reaches a constant proportion of individuals 
+        in each life stage - a key insight from the Leslie Matrix approach. The proportion of adults in this 
+        distribution directly impacts disease transmission potential.
+        """)
+        
+    with tab2:
         # Age structure tab
         st.subheader("Age Structure Analysis")
         
@@ -378,10 +334,11 @@ def run():
         selected_day = st.radio(
             "Select a day to view age structure:",
             day_options,
-            format_func=lambda x: f"Day {x}"
+            format_func=lambda x: f"Day {x}",
+            horizontal=True
         )
         
-        # PLOT FIRST - Age structure 
+        # Age structure plot
         day_idx = selected_day - 1
         age_distribution = results[day_idx, :]
         
@@ -426,22 +383,13 @@ def run():
             ax4.set_yticklabels(age_labels)
         
         ax4.set_xlabel('Number of Individuals')
-        ax4.set_title(f'Age Structure on Day {selected_day}', fontsize=14)
+        ax4.set_title(f'Age Structure on Day {selected_day} (n vector representation)', fontsize=14)
         
         # Add stage dividers
         ax4.axhline(y=egg_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
         ax4.axhline(y=egg_stage_duration + larval_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
         
         st.pyplot(fig4)
-        
-        # CONCISE INTERPRETATION 
-        st.markdown("""
-        **Age Structure Insights:**
-        
-        This visualization shows the detailed age-class distribution (the "n vector" in Fig 24.8). The red bars 
-        indicate reproductive ages when females take blood meals. Only adults that survive beyond the extrinsic 
-        incubation period can transmit pathogens, making age structure crucial for disease epidemiology.
-        """)
         
         # Cohort survival analysis
         st.subheader("Cohort Survival Analysis")
@@ -505,23 +453,25 @@ def run():
             
             st.pyplot(fig5)
             
-            # CONCISE INTERPRETATION 
+            # Concise interpretation
             st.markdown("""
-            **Survivorship Analysis:**
+            **Age Structure Interpretation:**
             
-            This survival curve resembles the Type II survivorship curve described in Fig 24.6 of Black & Moore, 
-            typical for many mosquito species with relatively constant mortality rates. The slope of this curve 
-            is directly related to the daily survival probability (p), which is the most sensitive parameter in 
-            vectorial capacity calculations.
+            The horizontal bar chart represents the detailed age structure (n vector in Fig 24.8 of Black & Moore). 
+            Red bars indicate reproductive ages when females take blood meals, showing the key reproductive age classes.
+            
+            The survival curve represents a Type II survivorship pattern with relatively constant mortality rates 
+            across age classes, typical for many mosquito species. This pattern strongly influences vectorial capacity 
+            as it determines how many mosquitoes survive through the extrinsic incubation period.
             """)
             
         else:
             st.warning(f"No eggs were laid on day {cohort_day}. Please select a different day.")
     
-    with tab4:
+    with tab3:
         st.header("Vectorial Capacity Analysis")
         
-        # DISPLAY FORMULA AND CALCULATION FIRST
+        # DISPLAY FORMULA AND CALCULATION
         st.markdown("""
         ### Macdonald's Equation for Vectorial Capacity
         
@@ -569,12 +519,81 @@ def run():
         
         st.pyplot(fig6)
         
-        # Add table with components
+        # Create comparative plot showing effects of different control strategies
+        control_days = np.arange(1, 101)
+        
+        # Scenario 1: Baseline (current parameters)
+        baseline_adults = adults[:min(100, len(adults))]
+        if len(baseline_adults) < 100:
+            baseline_adults = np.pad(baseline_adults, (0, 100-len(baseline_adults)), 'constant', 
+                                    constant_values=baseline_adults[-1] if len(baseline_adults) > 0 else 0)
+        
+        # Scenario 2: Simulated larval control (50% reduction in larval survival)
+        larval_control_results, _, _, _ = run_leslie_model(
+            egg_survival, larval_survival * 0.5, adult_survival, 
+            initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
+            min(100, num_days), egg_stage_duration, larval_stage_duration,
+            enable_density_dependence, carrying_capacity,
+            enable_immigration, immigration_rate, mortality_rate
+        )
+        larval_control_adults = np.sum(larval_control_results[:, adult_indices], axis=1)
+        if len(larval_control_adults) < 100:
+            larval_control_adults = np.pad(larval_control_adults, (0, 100-len(larval_control_adults)), 'constant', 
+                                          constant_values=larval_control_adults[-1] if len(larval_control_adults) > 0 else 0)
+        
+        # Scenario 3: Simulated adult control (50% reduction in adult survival)
+        adult_control_results, _, _, _ = run_leslie_model(
+            egg_survival, larval_survival, adult_survival * 0.5, 
+            initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
+            min(100, num_days), egg_stage_duration, larval_stage_duration,
+            enable_density_dependence, carrying_capacity,
+            enable_immigration, immigration_rate, mortality_rate
+        )
+        adult_control_adults = np.sum(adult_control_results[:, adult_indices], axis=1)
+        if len(adult_control_adults) < 100:
+            adult_control_adults = np.pad(adult_control_adults, (0, 100-len(adult_control_adults)), 'constant', 
+                                         constant_values=adult_control_adults[-1] if len(adult_control_adults) > 0 else 0)
+        
+        # Plot control strategies
+        st.subheader("Vector Control Strategy Comparison")
+        fig8, ax8 = plt.subplots(figsize=(10, 6))
+        ax8.plot(control_days, baseline_adults, label='Baseline', color='#1e88e5', linewidth=2)
+        ax8.plot(control_days, larval_control_adults, label='50% Reduction in Larval Survival', color='#ff6e40', linewidth=2)
+        ax8.plot(control_days, adult_control_adults, label='50% Reduction in Adult Survival', color='#5d5d5d', linewidth=2)
+        
+        ax8.set_xlabel('Day', fontsize=12)
+        ax8.set_ylabel('Number of Adult Mosquitoes', fontsize=12)
+        ax8.set_title('Effect of Control Strategies on Adult Mosquito Population', fontsize=14)
+        ax8.legend(fontsize=10)
+        ax8.grid(True, alpha=0.3)
+        
+        # Use log scale if numbers get large
+        if max(baseline_adults) > 1000 or max(larval_control_adults) > 1000 or max(adult_control_adults) > 1000:
+            ax8.set_yscale('log')
+            st.info("Using logarithmic scale for y-axis due to large population numbers")
+        
+        st.pyplot(fig8)
+        
+        # Concise interpretation
+        st.markdown("""
+        **Vectorial Capacity Insights:**
+        
+        The top graph shows that vectorial capacity is extremely sensitive to adult survival rate (p), 
+        with small changes causing dramatic effects. This confirms Table 24.1 from Black & Moore that 
+        shows p is the most influential parameter in disease transmission.
+        
+        The control strategy comparison demonstrates why adult control (reducing adult survival) has a more 
+        immediate impact on disease transmission than larval control. Adult control directly affects both 
+        the p^n term and the 1/(-ln p) term in Macdonald's equation, creating a non-linear reduction in 
+        vectorial capacity.
+        """)
+        
+        # Create table with vectorial capacity components
         vc_data = {
             "Parameter": ["m (vector:host ratio)", "a (biting rate)", "b (vector competence)", 
-                         "p (daily survival)", "n (extrinsic incubation)", "V (vectorial capacity)"],
+                        "p (daily survival)", "n (extrinsic incubation)", "V (vectorial capacity)"],
             "Value": [f"{adults[-1]/100:.2f}", f"{biting_rate:.2f}", f"{vector_competence:.2f}", 
-                     f"{adult_survival:.2f}", f"{extrinsic_incubation}", f"{vectorial_capacity:.4f}"],
+                    f"{adult_survival:.2f}", f"{extrinsic_incubation}", f"{vectorial_capacity:.4f}"],
             "Description": [
                 "Mosquitoes per human",
                 "Human bites per mosquito per day",
@@ -587,24 +606,26 @@ def run():
         
         vc_df = pd.DataFrame(vc_data)
         st.table(vc_df)
-        
-        # CONCISE INTERPRETATION
-        st.markdown(f"""
-        **Vectorial Capacity Insights:**
-        
-        As shown in Table 24.1 of Black & Moore, vectorial capacity is most sensitive to changes in daily 
-        survival probability (p). This graph demonstrates how even small increases in p cause exponential 
-        increases in transmission potential, explaining why adulticidal control measures targeting mosquito 
-        longevity can be more effective than those reducing mosquito density.
-        """)
     
-    with tab5:
-        st.header("Data Tables")
+    with tab4:
+        st.header("Data Tables & Leslie Matrix")
         
         # Create tabs for different data views
-        data_tab1, data_tab2 = st.tabs(["Summary Data", "Leslie Matrix"])
+        data_tab1, data_tab2 = st.tabs(["Population Summary", "Leslie Matrix Structure"])
         
         with data_tab1:
+            # Create a DataFrame for the summary data
+            summary_df = pd.DataFrame({
+                'Day': days,
+                'Eggs': eggs,
+                'Larvae': larvae,
+                'Adults': adults,
+                'Total': total_population,
+                '%Eggs': percent_eggs,
+                '%Larvae': percent_larvae,
+                '%Adults': percent_adults
+            })
+            
             st.dataframe(summary_df.style.background_gradient(cmap='viridis', subset=['Total']))
             
             # Download button for CSV
@@ -648,92 +669,14 @@ def run():
             st.markdown("""
             **Leslie Matrix Structure:**
             
-            The Leslie Matrix contains:
+            The Leslie Matrix (M) contains:
             - **First row**: Fecundity values - eggs produced by each age class
             - **Subdiagonal**: Survival probabilities between age classes
             - **Everything else**: Zeros (individuals can only age one day at a time)
             
-            This matrix-based approach efficiently captures both age-dependent survival and 
-            reproduction patterns, as described in Fig 24.8 of Black & Moore.
+            As described in Fig 24.8 of Black & Moore, the population vector at time t+1 is calculated by 
+            multiplying the Leslie Matrix by the population vector at time t: n(t+1) = M × n(t)
             """)
-    
-    # Add vector control section
-    st.header("Vector Control Implications")
-    
-    # Create comparative plot showing effects of different control strategies
-    # Create data for three scenarios - baseline, larval control, adult control
-    control_days = np.arange(1, 101)
-    
-    # Scenario 1: Baseline (current parameters)
-    baseline_adults = adults[:min(100, len(adults))]
-    if len(baseline_adults) < 100:
-        baseline_adults = np.pad(baseline_adults, (0, 100-len(baseline_adults)), 'constant', 
-                                constant_values=baseline_adults[-1] if len(baseline_adults) > 0 else 0)
-    
-    # Scenario 2: Simulated larval control (50% reduction in larval survival)
-    larval_control_results, _, _, _ = run_leslie_model(
-        egg_survival, larval_survival * 0.5, adult_survival, 
-        initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
-        min(100, num_days), egg_stage_duration, larval_stage_duration,
-        enable_density_dependence, carrying_capacity if enable_density_dependence else 50000,
-        enable_immigration, immigration_rate if enable_immigration else 10, 
-        mortality_rate if enable_immigration else 0.1
-    )
-    larval_control_adults = np.sum(larval_control_results[:, adult_indices], axis=1)
-    if len(larval_control_adults) < 100:
-        larval_control_adults = np.pad(larval_control_adults, (0, 100-len(larval_control_adults)), 'constant', 
-                                      constant_values=larval_control_adults[-1] if len(larval_control_adults) > 0 else 0)
-    
-    # Scenario 3: Simulated adult control (50% reduction in adult survival)
-    adult_control_results, _, _, _ = run_leslie_model(
-        egg_survival, larval_survival, adult_survival * 0.5, 
-        initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
-        min(100, num_days), egg_stage_duration, larval_stage_duration,
-        enable_density_dependence, carrying_capacity if enable_density_dependence else 50000,
-        enable_immigration, immigration_rate if enable_immigration else 10, 
-        mortality_rate if enable_immigration else 0.1
-    )
-    adult_control_adults = np.sum(adult_control_results[:, adult_indices], axis=1)
-    if len(adult_control_adults) < 100:
-        adult_control_adults = np.pad(adult_control_adults, (0, 100-len(adult_control_adults)), 'constant', 
-                                     constant_values=adult_control_adults[-1] if len(adult_control_adults) > 0 else 0)
-    
-    # PLOT FIRST
-    fig8, ax8 = plt.subplots(figsize=(10, 6))
-    ax8.plot(control_days, baseline_adults, label='Baseline', color='#1e88e5', linewidth=2)
-    ax8.plot(control_days, larval_control_adults, label='50% Reduction in Larval Survival', color='#ff6e40', linewidth=2)
-    ax8.plot(control_days, adult_control_adults, label='50% Reduction in Adult Survival', color='#5d5d5d', linewidth=2)
-    
-    ax8.set_xlabel('Day', fontsize=12)
-    ax8.set_ylabel('Number of Adult Mosquitoes', fontsize=12)
-    ax8.set_title('Effect of Control Strategies on Adult Mosquito Population', fontsize=14)
-    ax8.legend(fontsize=10)
-    ax8.grid(True, alpha=0.3)
-    
-    # Use log scale if numbers get large
-    if max(baseline_adults) > 1000 or max(larval_control_adults) > 1000 or max(adult_control_adults) > 1000:
-        ax8.set_yscale('log')
-        st.info("Using logarithmic scale for y-axis due to large population numbers")
-    
-    st.pyplot(fig8)
-    
-    # THEN CONCISE INTERPRETATION
-    st.markdown("""
-    **Control Strategy Comparison:**
-    
-    This comparison relates to Fig 24.13 in Black & Moore, showing how different control strategies 
-    affect adult mosquito populations:
-    
-    1. **Adult Control** (reducing adult survival by 50%) has the most immediate impact on both
-       population size and vectorial capacity due to its exponential effect on the p^n term
-       
-    2. **Larval Control** (reducing larval survival by 50%) shows a delayed effect as it takes
-       time to impact the adult population
-       
-    Black & Moore emphasize that while reducing adult survival has the greatest epidemiological 
-    impact, integrated strategies targeting multiple life stages may be more sustainable and 
-    cost-effective in real-world settings.
-    """)
 
 if __name__ == "__main__":
     run()
