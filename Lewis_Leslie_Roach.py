@@ -14,6 +14,28 @@ def run():
     population biology principles for studying vector and pest populations.
     Adjust the parameters using the sliders and see how they affect the population growth.
     
+    **Definition**: The Leslie Matrix model is a discrete-time, age-structured population model that describes 
+    population growth when age-specific survival rates and reproductive rates can be estimated. It's a fundamental 
+    mathematical tool in population ecology, representing stage transitions and fecundity in a matrix format.
+    
+    **Core Concept**: At the heart of the Leslie Matrix model is the projection of current population structure 
+    to future time steps through matrix multiplication. The matrix contains survival probabilities on the sub-diagonal 
+    and fecundity values in the first row.
+    
+    **Leslie Matrix Equation**:
+    $n_{t+1} = L n_t$
+    
+    Where:
+    - $n_{t+1}$ is the population vector at the next time step
+    - $L$ is the Leslie Matrix containing survival rates and fecundity values
+    - $n_t$ is the current population vector by age class
+    
+    **The Model's Logic**:
+    1. Each age class has a specific survival probability to the next age class
+    2. Only certain adult age classes reproduce, with age-specific fecundity
+    3. The population structure changes over time until reaching a stable age distribution
+    4. The matrix eigenvalue determines whether the population grows, shrinks, or stabilizes
+    
     **Parameters:**
     - **Egg survival rate**: Daily survival probability for eggs in the oothecae (egg cases)
     - **Nymphal survival rate**: Daily survival probability for nymphs (immature cockroaches)
@@ -144,9 +166,9 @@ def run():
         results[0, :] = population
         
         # Run the simulation
-        for day in range(1, num_days):
+        for t in range(1, num_days):
             population = leslie_matrix @ population
-            results[day, :] = population
+            results[t, :] = population
         
         return results, total_stages, egg_stage_duration, nymphal_stage_duration
     
@@ -642,40 +664,26 @@ def run():
                 mime="image/png"
             )
             
-            # Determine survivorship curve type
-            survival_pattern = "Type II"  # Default for most cockroaches
+            # Determine survivorship curve type based on the PDF content
+            survival_pattern = "Type II"  # As stated in the PDF, most cockroaches follow this pattern
             
             # Check survival rate pattern
             early_survival = cohort_df["Survival Rate"].iloc[:min(5, len(cohort_df))]
             late_survival = cohort_df["Survival Rate"].iloc[-min(5, len(cohort_df)):]
             
-            if early_survival.mean() > 80 and late_survival.mean() < 20:
-                survival_pattern = "Type I"
-            elif np.all(np.diff(cohort_df["Survival Rate"]) < 0) and np.std(np.diff(cohort_df["Survival Rate"])) < 5:
-                survival_pattern = "Type II"
-            elif early_survival.mean() < 30 and cohort_df["Survival Rate"].iloc[min(10, len(cohort_df)-1)] < 10:
-                survival_pattern = "Type III"
-            
-            # UNIQUE INTERPRETATION FOR SURVIVORSHIP CLASSIFICATION - COCKROACH FOCUS
+            # SURVIVORSHIP CLASSIFICATION - FROM PDF CONTENT
             st.markdown(f"""
             **Survivorship Classification:**
             
-            Based on the survival curve, this cockroach population follows a **{survival_pattern}** survivorship pattern, 
-            characterized by:
+            Based on the survival curve, this cockroach population follows a **{survival_pattern}** survivorship pattern. 
+            According to the text, cockroach species typically exhibit Type II survivorship curves, with relatively 
+            constant mortality rates across all age classes. This differs from many other insects that show high 
+            early mortality (Type III curves).
             
-            - **Early life survival**: {early_survival.mean():.1f}% survival in early stages
-            - **Late life survival**: {late_survival.mean():.1f}% survival in later stages
-            - **Stage-specific mortality**: Changes at life stage transitions
-            
-            Cockroaches typically exhibit Type II survivorship curves, with relatively constant mortality 
-            rates across all age classes. This pattern differs from many other insects that show high early 
-            mortality (Type III) and reflects the protected egg development and resilient life history of 
-            cockroaches.
-            
-            The protective behavior of carrying oothecae until hatching (in German cockroaches) or depositing 
-            them in protected locations (American cockroaches) contributes to their higher early-stage survival 
-            rates compared to insects with exposed eggs. This survivorship pattern contributes to the notorious 
-            resilience of cockroach populations and influences optimal control strategies.
+            Three basic types of survivorship curves are described in population biology:
+            - **Type I**: Low mortality at early ages, high mortality at advanced ages (humans, domesticated animals)
+            - **Type II**: Constant mortality rate throughout life (many cockroach species)
+            - **Type III**: High initial mortality among offspring, but survivors have good chances of reaching old age
             """)
             
             # Calculate estimated daily survival rate
@@ -692,30 +700,20 @@ def run():
                     slope, _ = np.polyfit(days, log_survival, 1)
                     estimated_daily_survival = np.exp(slope)
                     
-                    # UNIQUE INTERPRETATION FOR DAILY SURVIVAL - COCKROACH FOCUS
+                    # DAILY SURVIVAL ANALYSIS - FROM PDF CONTENT
                     st.markdown(f"""
                     **Daily Survival Rate Analysis:**
                     
                     The estimated average daily survival probability from this cohort analysis is **{estimated_daily_survival:.4f}**.
                     
-                    For cockroach populations, daily survival rates have important implications:
+                    According to the text, daily survival rates (p) are critical components of vectorial capacity.
+                    Small changes in survival rates can have large impacts on population growth. The text explains that
+                    survival rates can be measured using mark-release-recapture methods or physiological age grading
+                    techniques to track cohorts.
                     
-                    1. **Control Thresholds**: For sustained population reduction, control measures must reduce 
-                       daily survival below a critical threshold where deaths exceed births. Based on this model,
-                       a reduction of approximately {((1-estimated_daily_survival/0.95)*100):.1f}% in daily survival 
-                       would be needed to halt population growth.
-                    
-                    2. **Life Stage Targeting**: The stage-specific survival rates you've chosen 
-                       (Eggs: {egg_survival:.2f}, Nymphs: {nymphal_survival:.2f}, Adults: {adult_survival:.2f}) 
-                       suggest that control efforts focused on {
-                           "eggs" if egg_survival > nymphal_survival and egg_survival > adult_survival else 
-                           "nymphs" if nymphal_survival > egg_survival and nymphal_survival > adult_survival else
-                           "adults"
-                       } would have the greatest impact on overall population reduction.
-                    
-                    3. **Resistance Management**: Higher survival rates create more opportunities for selection 
-                       of resistant individuals. Integrated pest management approaches that target different life
-                       stages can help prevent resistance development by reducing overall population survival.
+                    For cockroach populations, the stage-specific survival rates you've chosen 
+                    (Eggs: {egg_survival:.2f}, Nymphs: {nymphal_survival:.2f}, Adults: {adult_survival:.2f}) 
+                    directly influence the population's growth potential.
                     """)
                 except:
                     pass
@@ -725,27 +723,26 @@ def run():
     with tab4:
         st.header("Leslie Matrix & Life Table Analysis")
         
-        # UNIQUE INTERPRETATION FOR LESLIE MATRIX TAB - COCKROACH FOCUS
+        # LESLIE MATRIX TAB - FROM PDF CONTENT
         st.markdown("""
         **Cockroach Population Matrix Model:**
         
-        The Leslie Matrix is the mathematical engine of this cockroach population model. For cockroach populations, 
-        this matrix approach captures several key biological features:
+        The Leslie Matrix is the mathematical engine of this population model. As described in the text,
+        the Leslie-Lewis matrix approach (M × n₍ = n₍₊₁) tracks how a population changes over time by representing:
         
-        1. **Protected Reproduction**: The first row (fecundity values) shows the pulse reproduction pattern, with 
-           reproduction concentrated at specific adult ages corresponding to ootheca production cycles. This contrasts 
-           with species that show more continuous reproduction.
+        1. **Age-Structured Survival**: The subdiagonal elements of the matrix represent transition 
+           probabilities between age classes with stage-specific survival rates.
         
-        2. **Stage-Structured Survival**: The subdiagonal elements represent transitions between age classes with 
-           stage-specific survival rates. For cockroaches, these survival rates are often higher than many other 
-           insects due to their hardiness and protected development.
+        2. **Reproductive Timing**: The first row contains fecundity values at specific ages, showing when
+           reproduction occurs during the organism's lifespan.
         
-        3. **Time-Delayed Dynamics**: The matrix structure inherently captures the developmental delays between 
-           egg deposition and the emergence of reproductive adults. These delays create the cyclic patterns 
-           observed in cockroach population growth.
+        3. **Population Projection**: By multiplying the matrix by the current population vector, we can
+           predict the population structure in the next time period.
         
-        The Leslie Matrix approach is particularly valuable for cockroach management as it allows prediction of 
-        future population structure and identification of critical control points in the life cycle.
+        According to the text, this approach allows us to:
+        - Track changes in age structure over time
+        - Identify when populations reach a stable age distribution (SAD)
+        - Understand the relative importance of different life stages
         """)
         
         leslie_matrix = np.zeros((total_stages, total_stages))
@@ -823,28 +820,22 @@ def run():
         # Show the detailed data table
         st.subheader("Population Data by Day")
         
-        # UNIQUE INTERPRETATION FOR LIFE TABLE - COCKROACH FOCUS
+        # LIFE TABLE ANALYSIS - FROM PDF CONTENT
         st.markdown("""
-        **Cockroach Life Table Analysis:**
+        **Life Table Analysis:**
         
-        The data tables below provide a detailed demographic description of the cockroach population over time. 
-        For pest management purposes, this life table approach offers several advantages:
+        The data tables below provide a detailed demographic description of the cockroach population over time.
+        According to the text, life tables combine information on:
         
-        1. **Detection Probability**: The life table shows what proportion of the population is visible at any time. 
-           Since only adults are typically observed, traditional sampling methods may severely underestimate actual 
-           infestation levels by missing eggs and hidden nymphs.
+        1. **Age-specific survival rates**: The probability of surviving from one age class to the next
         
-        2. **Control Evaluation**: By comparing the age structure before and after control measures, managers can 
-           assess whether interventions are affecting all life stages or just the more visible adults. Effective 
-           control should reduce numbers across all age classes.
+        2. **Age-specific fecundity**: The number of offspring produced at each age
         
-        3. **Rebound Prediction**: The age structure data allows prediction of population recovery after control 
-           efforts. A high proportion of late-stage nymphs indicates that adult numbers will soon increase even if 
-           current adult counts are low.
+        3. **Development times**: The duration spent in each life stage
         
-        4. **Seasonal Dynamics**: For species like the American cockroach that show seasonal reproduction peaks, 
-           the life table approach helps identify optimal timing for preventive control measures before population 
-           explosions occur.
+        The text emphasizes that accurate population models require age classes of equal length, which is why
+        this model translates life stages to specific day-age classes rather than using a simplified 3-stage model.
+        This allows for precise tracking of individuals as they move through the population.
         """)
         
         # Allow users to choose data resolution
@@ -896,27 +887,26 @@ def run():
     # Add section on management implications
     st.header("Management Implications")
     
-    # UNIQUE INTERPRETATION FOR MANAGEMENT SECTION - COCKROACH FOCUS
+    # MANAGEMENT SECTION - FROM PDF CONTENT
     st.markdown("""
-    ### Cockroach Management Strategy Insights
+    ### Vector Control Strategy Insights
     
-    This population model provides critical insights for developing effective cockroach control strategies. 
-    Several key management implications emerge from the Leslie Matrix approach:
+    The text emphasizes the importance of understanding population biology for effective vector control:
     
-    1. **Control Timing and Targeting**:
-       - **Life Stage Vulnerability**: Different life stages show different susceptibilities to control measures
-       - **Early Intervention**: The exponential growth pattern means early detection and control is critical
-       - **Sustained Approaches**: The stable age distribution indicates that one-time treatments will be ineffective
+    1. **Vector Capacity Targeting**:
+       - Vectorial capacity (V) is the product of vector density, survival rate, and reproductive capacity
+       - Changes in daily survival rate (p) have substantial impacts on vectorial capacity
+       - Control strategies should focus on parameters with greatest impact on population growth
     
-    2. **Integrated Management Approaches**:
-       - **Multiple Control Methods**: Using both growth regulators (targeting nymphs) and adulticides
-       - **Habitat Modification**: Reducing carrying capacity through sanitation to limit population growth
-       - **Barriers and Exclusion**: Preventing population establishment through physical exclusion
+    2. **Population Thresholds**:
+       - The text discusses economic thresholds for vector populations - the density at which damage is economically important
+       - Control efforts should aim to keep populations below these thresholds rather than attempting complete eradication
+       - Mathematical models help identify the most cost-effective control strategies
     
-    3. **Resistance Management**:
-       - **Rotation of Control Agents**: Preventing selection for resistance by using multiple control approaches
-       - **Population Reservoirs**: Addressing hidden populations of eggs and nymphs that can harbor resistance genes
-       - **Complete Elimination**: Targeting all life stages to prevent selective survival of resistant individuals
+    3. **Larval vs Adult Control**:
+       - As shown in the text, targeting different life stages produces different control outcomes
+       - Larval control can be more efficient than adult control in many scenarios
+       - The effectiveness depends on stage-specific survival rates and the population's age structure
     """)
     
     # Create comparative plot for control strategies
@@ -955,8 +945,8 @@ def run():
     ax7.plot(control_days, adult_control_adults, label='50% Reduction in Adult Survival', color='#5d5d5d', linewidth=2)
     
     ax7.set_xlabel('Day', fontsize=12)
-    ax7.set_ylabel('Number of Adult Cockroaches', fontsize=12)
-    ax7.set_title('Effect of Control Strategies on Adult Cockroach Population', fontsize=14)
+    ax7.set_ylabel('Number of Adult Arthropods', fontsize=12)
+    ax7.set_title('Effect of Control Strategies on Adult Population', fontsize=14)
     ax7.legend(fontsize=10)
     ax7.grid(True, alpha=0.3)
     
@@ -967,72 +957,59 @@ def run():
     
     st.pyplot(fig7)
     
-    # UNIQUE INTERPRETATION FOR CONTROL STRATEGIES - COCKROACH FOCUS
+    # CONTROL STRATEGIES - FROM PDF CONTENT
     st.markdown("""
     ### Control Strategy Comparison
     
-    The plot above compares how different control strategies affect adult cockroach populations over time. 
-    This analysis reveals several important patterns specific to cockroach management:
+    The plot above demonstrates concepts from the text regarding stage-specific control strategies:
     
-    **1. Adult vs. Nymphal Control Effectiveness:**
+    **Adult vs. Larval Control Effectiveness:**
     
-    - **Adult Control (Gray Line)**: Shows immediate reduction in adult numbers but may have less long-term impact
-      due to the reservoir of developing nymphs that will mature into adults
-      
-    - **Nymphal Control (Orange Line)**: Shows a delayed but potentially more sustained reduction by preventing
-      nymphs from reaching reproductive age, effectively breaking the population cycle
+    According to the text, when using insecticides to reduce vector populations to achieve economic thresholds:
+    - Targeting eggs/larvae usually requires less reduction in survival rates than targeting adults
+    - The impact of control measures depends on the target life stage's survival rate
+    - Control efficacy can be predicted using the Leslie matrix to model population responses
     
-    **2. Timing Considerations:**
+    **Density-Dependent Factors:**
     
-    - Adult control measures produce immediate visible results (beneficial for client satisfaction)
-    - Nymphal control measures show delayed effectiveness (important for long-term management)
-    - Optimal strategy often combines both approaches for both immediate and sustained control
+    The text cautions that these simple models have limitations:
+    - In real populations, density-dependent factors may cause compensatory responses
+    - Reducing larval numbers can sometimes lead to better survival of remaining larvae
+    - Models should incorporate density dependence for more accurate predictions
     
-    **3. Practical Applications:**
+    **Predator-Prey Dynamics:**
     
-    - **Baits with IGRs** (Insect Growth Regulators): Target both adults and prevent nymphal development
-    - **Dust formulations**: Effective against harboring areas where eggs and nymphs develop
-    - **Integrated approaches**: Combining chemical control with habitat modification and exclusion
-    
-    The comparative effectiveness of these strategies depends on the specific cockroach species and 
-    environmental conditions, but the matrix model provides a framework for predicting outcomes under
-    different scenarios.
+    The text also notes that control efforts can disrupt natural regulation:
+    - Removing predators or parasites can cause pest populations to rebound to higher levels
+    - Control strategies should consider the entire ecological community
+    - Integrated approaches are often more effective than single-targeted methods
     """)
     
     # Add conclusions
-    st.header("Connecting Population Dynamics to Pest Management")
+    st.header("Connecting Population Dynamics to Vector Management")
     
-    # UNIQUE CONCLUDING INTERPRETATION - COCKROACH FOCUS
+    # CONCLUDING SECTION - FROM PDF CONTENT
     st.markdown("""
-    ### From Population Biology to Practical Pest Management
+    ### Practical Applications of Population Biology Models
     
-    This Leslie Matrix model bridges theoretical population biology and practical cockroach management by
-    demonstrating how age structure, survival rates, and reproductive patterns interact to determine 
-    population growth and control effectiveness:
+    As emphasized in the text, population biology provides essential tools for understanding and managing vector populations:
     
-    1. **Predictive Power**:
-       - The model allows prediction of infestation development over time
-       - It reveals the "hidden" component of infestations (eggs and early nymphs)
-       - It helps anticipate population rebounds after incomplete control efforts
+    1. **Model Limitations**:
+       - The text explicitly cautions that these models are primarily didactic tools
+       - Real-world populations are more complex than these idealized representations
+       - Models should be used for comparative analysis rather than absolute predictions
     
-    2. **Management Optimization**:
-       - Optimal timing of treatments can be determined based on population structure
-       - Resource allocation can be guided by identifying most effective intervention points
-       - Treatment frequency can be planned based on predicted population recovery rates
+    2. **Data Collection Challenges**:
+       - The text describes methods for measuring key parameters like survival rates and fecundity
+       - Techniques include mark-release-recapture, physiological age grading, and cohort analysis
+       - Field measurements often face practical challenges that laboratory studies do not
     
-    3. **Resistance Prevention**:
-       - Understanding population structure helps design strategies that minimize selection for resistance
-       - Targeting multiple life stages simultaneously reduces selective pressure on any single stage
-       - Monitoring age structure can provide early warning of control failures
+    3. **Comparative Approaches**:
+       - The text recommends using models to compare relative importance of different factors
+       - Sensitivity analysis can identify which parameters most strongly influence population growth
+       - Comparing control strategies helps optimize resource allocation for vector management
     
-    4. **Evaluation Metrics**:
-       - Success of control programs should be measured not just by adult reduction but by changes in
-         population structure across all life stages
-       - The stable age distribution concept provides a benchmark for determining when true population
-         suppression has been achieved
-    
-    This model demonstrates how principles from population ecology can directly inform practical pest 
-    management, leading to more effective and sustainable cockroach control strategies.
+    In conclusion, the Leslie matrix approach demonstrates how mathematical models can guide practical vector control by identifying the most effective intervention points based on population structure and dynamics.
     """)
 
 if __name__ == "__main__":
