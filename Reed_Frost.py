@@ -663,10 +663,10 @@ def run():
             )
 
                 # Add explanation
-                st.subheader("Parameter Interaction Effects")
+            st.subheader("Parameter Interaction Effects")
                 
-                if (x_name == "p" and y_name == "s0") or (x_name == "s0" and y_name == "p"):
-                    st.write("""
+                    if (x_name == "p" and y_name == "s0") or (x_name == "s0" and y_name == "p"):
+                        st.write("""
                     ### Probability of Effective Contact (P) × Initial Susceptible Population (S₀)
                     
                     **Key observations:**
@@ -695,8 +695,8 @@ def run():
                     - The contour map reveals that a moderate reduction in both parameters may be more achievable than a large reduction in either one alone
                     - In large populations (high S₀), even small increases in P can push a disease over the epidemic threshold
                     """)
-                elif (x_name == "p" and y_name == "c0") or (x_name == "c0" and y_name == "p"):
-                    st.write("""
+                    elif (x_name == "p" and y_name == "c0") or (x_name == "c0" and y_name == "p"):
+                        st.write("""
                     ### Probability of Effective Contact (P) × Initial Cases (C₀)
                     
                     **Key observations:**
@@ -725,8 +725,8 @@ def run():
                     - Early detection systems provide the greatest benefit when P can simultaneously be reduced through control measures
                     - The effectiveness of travel restrictions or border controls depends on both the number of imported cases and the local contact rates
                     """)
-                elif (x_name == "b" and y_name == "p") or (x_name == "p" and y_name == "b"):
-                    st.write("""
+                    elif (x_name == "b" and y_name == "p") or (x_name == "p" and y_name == "b"):
+                        st.write("""
                     ### Birth Rate (B) × Probability of Effective Contact (P)
                     
                     **Key observations:**
@@ -755,8 +755,8 @@ def run():
                     - Reducing P has a more immediate effect, while managing birth-related susceptible inflow affects long-term dynamics
                     - Many real-world childhood diseases (measles, chickenpox) persist as endemic diseases due precisely to this interaction
                     """)
-                elif (x_name == "b" and y_name == "d") or (x_name == "d" and y_name == "b"):
-                    st.write("""
+                    elif (x_name == "b" and y_name == "d") or (x_name == "d" and y_name == "b"):
+                        st.write("""
                     ### Birth Rate (B) × Death Rate (D)
                     
                     **Key observations:**
@@ -785,8 +785,8 @@ def run():
                     - The demographic profile of a population should inform the intensity and duration of control measures
                     - Age-structured interventions become particularly important when birth and death rates create specific population age structures
                     """)
-                else:
-                    st.write(f"""
+                    else:
+                        st.write(f"""
                     ### {x_param} × {y_param} Interaction
                     
                     **Key observations:**
