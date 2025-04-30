@@ -332,18 +332,53 @@ def run():
         st.altair_chart(chart, use_container_width=True)
         
         # Concise interpretation
+        # Population trend plot
+        fig1, ax1 = plt.subplots(figsize=(10, 6))
+        ax1.plot(days, eggs, label='Eggs', color='#f7d060', linewidth=2)
+        ax1.plot(days, larvae, label='Larvae', color='#ff6e40', linewidth=2)
+        ax1.plot(days, adults, label='Adults', color='#5d5d5d', linewidth=2)
+        ax1.plot(days, total_population, label='Total', color='#1e88e5', linewidth=3, linestyle='--')
+        
+        ax1.set_xlabel('Day', fontsize=12)
+        ax1.set_ylabel('Number of Individuals', fontsize=12)
+        ax1.set_title('Mosquito Population Growth by Life Stage', fontsize=14)
+        ax1.legend(fontsize=10)
+        ax1.grid(True, alpha=0.3)
+        
+        # Use log scale if the population gets very large
+        if max(total_population) > 10000:
+            ax1.set_yscale('log')
+            st.info("Note: Using logarithmic scale for y-axis due to large population numbers")
+        
+        st.pyplot(fig1)
+        
+        # Streamlit download button
+        st.download_button(
+            label="Download Population Trends Plot",
+            data=fig_to_bytes(fig1),
+            file_name="mosquito_population_trends.png",
+            mime="image/png"
+        )
+    
+        # CONCISE INTERPRETATION
+        st.subheader("Population Dynamics Interpretation")
+    
         st.markdown("""
-        **Population Dynamics Interpretation:**
+        **Mosquito Population Growth Dynamics:**
         
-        The population trend graph shows growth patterns across life stages, with:
+        This visualization reveals characteristic growth patterns in mosquito populations, with several important features:
         
-        * **Time Lags**: Note the phase shifts between egg, larval, and adult populations reflecting developmental delays
-        * **Exponential Growth**: In the absence of density dependence, populations initially grow exponentially
-        * **Cyclical Patterns**: Adult reproduction creates pulsed egg-laying events that propagate through the age structure
-        * **Stable Distribution**: The proportion of each life stage eventually stabilizes into the Stable Age Distribution (SAD)
+        1. **Pulse Reproduction Pattern**: Mosquitoes show distinct pulses of reproduction as females take blood meals at 
+           regular intervals, creating the step-like increases in egg numbers. This pattern corresponds directly to the 
+           gonotrophic cycles described in Black & Moore.
         
-        These patterns directly affect vectorial capacity since only older adults that survive through the extrinsic incubation 
-        period can transmit disease.
+        2. **Stage Duration Effects**: The relative lengths of egg and larval stages create a time-delayed pattern of 
+           population growth, with waves of individuals moving through developmental stages. This developmental timing 
+           directly influences vectorial capacity.
+        
+        3. **Control Implications**: For vector management, this growth curve suggests that interventions targeting 
+           adults before they reproduce will be most effective at reducing disease transmission. The exponential nature 
+           of the growth curve demonstrates why early detection and intervention are crucial.
         """)
         
     with tab2:
@@ -474,18 +509,91 @@ def run():
             
             st.pyplot(fig5)
             
-            # Concise interpretation
+            # Create age structure plot for the selected day
+            day_idx = selected_day - 1  # Convert to 0-based index
+            age_distribution = results[day_idx, :]
+            
+            # Create labels for each age class
+            age_labels = []
+            for age in range(total_stages):
+                if age < egg_stage_duration:
+                    age_labels.append(f"Egg {age+1}")
+                elif age < egg_stage_duration + larval_stage_duration:
+                    age_labels.append(f"Larva {age+1-egg_stage_duration}")
+                else:
+                    age_labels.append(f"Adult {age+1-(egg_stage_duration+larval_stage_duration)}")
+            
+            # Color bars by stage
+            bar_colors = []
+            for age in range(total_stages):
+                if age < egg_stage_duration:
+                    bar_colors.append('#f7d060')  # Egg color
+                elif age < egg_stage_duration + larval_stage_duration:
+                    bar_colors.append('#ff6e40')  # Larva color
+                else:
+                    bar_colors.append('#5d5d5d')  # Adult color
+            
+            adult_stage_start = egg_stage_duration + larval_stage_duration
+            
+            # Highlight reproduction days
+            for age in range(total_stages):
+                if age in [12, 17, 22, 27]:  # Blood meal days
+                    bar_colors[age] = '#e74c3c'  # Highlight reproduction days
+            
+            # Plot horizontal bar chart
+            fig4, ax4 = plt.subplots(figsize=(10, 8))
+            ax4.barh(range(total_stages), age_distribution, color=bar_colors)
+            
+            # Set y-ticks (limit to avoid overcrowding)
+            max_labels = 25
+            if total_stages > max_labels:
+                step = max(1, total_stages // max_labels)
+                y_ticks = range(0, total_stages, step)
+                ax4.set_yticks(y_ticks)
+                ax4.set_yticklabels([age_labels[i] for i in y_ticks])
+            else:
+                ax4.set_yticks(range(total_stages))
+                ax4.set_yticklabels(age_labels)
+            
+            ax4.set_xlabel('Number of Individuals')
+            ax4.set_title(f'Age Structure on Day {selected_day}', fontsize=14)
+            
+            # Add stage dividers
+            ax4.axhline(y=egg_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
+            ax4.axhline(y=egg_stage_duration + larval_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
+            
+            st.pyplot(fig4)
+            
+            st.download_button(
+                label="Download Age Structure Plot",
+                data=fig_to_bytes(fig4),
+                file_name=f"mosquito_age_structure_day_{selected_day}.png",
+                mime="image/png"
+            )
+            
+            # CONCISE INTERPRETATION
+            st.subheader("Age Structure Interpretation")
+            
             st.markdown("""
-            **Age Structure × Survivorship Interactions**
+            **Mosquito Population Age Structure:**
             
-            The age structure visualization reveals several key insights about vector population dynamics:
+            This visualization displays the detailed age distribution of the mosquito population, revealing patterns 
+            that are not apparent in the aggregated life stage counts:
             
-            * **Reproductive Bottlenecks**: Red bars highlight reproductive age classes (days 12, 17, 22, 27) when females take blood meals, showing only ~15% of adults reach reproductive age
-            * **Survival Thresholds**: The survival curve demonstrates that a Type II survivorship pattern (constant mortality) allows prediction of how many mosquitoes will survive through the extrinsic incubation period
-            * **Transmission Implications**: Only adults surviving beyond the extrinsic incubation period (typically 10-14 days post-emergence) contribute to disease transmission
-            * **Control Targeting**: The age structure reveals optimal timing for control interventions - targeting adults just before reproductive peaks creates disproportionate population impacts
+            1. **Blood Meal Timing**: The red bars indicate ages when females take blood meals and produce eggs. 
+               Unlike species with continuous reproduction, mosquitoes show distinct reproductive pulses following 
+               each blood meal, creating cohorts that move through the population together.
             
-            This analysis demonstrates why adult daily survival rate (p) is the most sensitive parameter in vectorial capacity calculations, as small changes in p dramatically affect the proportion of vectors living long enough to transmit disease.
+            2. **Development Bottlenecks**: Transitions between life stages (marked by dotted lines) represent 
+               vulnerable periods in the mosquito life cycle. For example, pupation and adult emergence may be 
+               more susceptible to environmental stressors, creating windows of opportunity for control.
+            
+            3. **Transmission Implications**: Only adult mosquitoes that survive beyond the extrinsic incubation 
+               period (typically 10-14 days post-emergence) can transmit disease. This age structure directly 
+               affects vectorial capacity as described in Black & Moore's model.
+            
+            4. **Cohort Identification**: The distinct "waves" of individuals at specific ages indicates separate 
+               cohorts moving through the population, reflecting the pulsed reproduction pattern following gonotrophic cycles.
             """)
             
         else:
