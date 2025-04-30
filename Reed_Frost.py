@@ -5,25 +5,36 @@ import numpy as np
 import io  
 
 def run():
-    # Display title and description with equation at the top
+        # Display title and description with equation at the top
     st.title("🧬 Reed-Frost Chain Binomial Model")
     st.markdown("#### 🔄 Generation-based epidemic simulator")
     st.markdown("""
-    This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model.
+    ### Introduction to the Reed-Frost Model
+    
+    This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model. 
     Adjust the parameters using the sliders and see how they affect the epidemic curve and disease dynamics.
-
-    **Definition**: The Reed-Frost model is a discrete-time epidemic model that describes how a disease spreads through a population over distinct time periods or generations.
-
+    
+    **Definition**: The Reed-Frost model is a discrete-time epidemic model that describes how a disease spreads through a population over distinct time periods or generations. It is a fundamental mathematical tool in epidemiology, representing a simplified framework for understanding disease transmission dynamics.
+    
+    **Core Concept**: At the heart of the Reed-Frost model is the probability of effective contact (P) between infected and susceptible individuals. For some diseases, this probability is high (e.g., influenza), while for others it is low (e.g., leprosy) or requires special forms of contact (e.g., HIV).
+    
     **Reed-Frost Equation**: 
     $C_{t+1} = S_t \cdot (1 - (1-p)^{C_t})$ 
-
+    
     Where:
     - $C_{t+1}$ is the number of new cases in the next time period
     - $S_t$ is the number of susceptible individuals in the current time period
     - $p$ is the probability of effective contact between an infected and susceptible individual
     - $C_t$ is the number of cases in the current time period
     
-    **Parameters:**
+    **The Model's Logic**: 
+    1. Each infectious individual makes contact with every other individual in the population during a time period
+    2. The probability that a contact between an infectious and susceptible individual will lead to a new infection is P
+    3. The probability that a susceptible escapes infection from any single case is (1-P)
+    4. The probability that a susceptible escapes infection from all cases is $(1-P)^{C_t}$
+    5. Therefore, the probability of becoming infected is $1-(1-P)^{C_t}$
+    
+    ### Adjustable Parameters:
     - **P**: The probability of effective contact between infected and susceptible individuals
     - **C0**: The initial number of cases in the population
     - **S0**: The initial number of susceptible individuals
@@ -31,6 +42,8 @@ def run():
     - **I**: Immigration rate per time period (adds new susceptibles)
     - **D**: Death rate per time period (applies to all population groups)
     - **M**: Mortality rate from disease (applies only to active cases)
+    
+    This model was originally developed to understand epidemics in closed populations, but can be modified to account for population dynamics like births, deaths, and immigration, allowing for the study of endemic diseases and more complex transmission patterns.
     """)
     
     # Helper function for downloading plots
