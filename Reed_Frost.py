@@ -471,7 +471,7 @@ def run():
             
             ax4.set_xlabel(param_configs[x_param]["label"], fontsize=12)
             ax4.set_ylabel(param_configs[y_param]["label"], fontsize=12)
-            ax4.set_title(title, fontsize=14)
+            ax4.set_title(title, fontsize=10)
             
             st.pyplot(fig4)
             
