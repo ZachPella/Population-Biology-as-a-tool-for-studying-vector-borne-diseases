@@ -214,22 +214,16 @@ def run():
       buf.seek(0)
       return buf
   
-  # =====================================================================
-  # CHANGE #2: UPDATE TAB DECLARATION TO INCLUDE THE NEW TAB
-  # =====================================================================
+  
   # Create tabs for different analyses
   tab1, tab2, tab3, tab4, tab5 = st.tabs(["Vectorial Capacity", "Sensitivity Analysis", "Host Preference Impact", "Parameter Relationships", "Data Table"])
   
-  # =====================================================================
-  # CHANGE #3: ADD NEW TAB IMPLEMENTATION
-  # =====================================================================
+
+  
   with tab1:
       st.header("Parameter Impact on Vectorial Capacity")
+      
       # Calculate the impact of changing each parameter by ±10%
-      # This is the problematic section that needs to be fixed
-# Put this in your "Vectorial Capacity" tab (tab1) implementation
-
-# Calculate the impact of changing each parameter by ±10%
       impact_data = {}
       params = {
           "Vector:host ratio (m)": {"value": vector_host_ratio, "code": "m"},
@@ -238,9 +232,9 @@ def run():
           "Daily survival (p)": {"value": daily_survival, "code": "p"},
           "EIP (n)": {"value": extrinsic_incubation, "code": "n"}
       }
-    
+      
       for param_name, param_info in params.items():
-        # Get baseline values
+          # Get baseline values
           baseline_params = {
               "m": vector_host_ratio,
               "a": biting_rate,
@@ -248,15 +242,15 @@ def run():
               "p": daily_survival,
               "n": extrinsic_incubation
           }
-        
-        # Calculate baseline VC
+          
+          # Calculate baseline VC
           baseline_vc = calculate_vectorial_capacity(
               baseline_params["m"], baseline_params["a"], 
               baseline_params["b"], baseline_params["p"], 
               baseline_params["n"]
           )
-        
-        # Calculate VC with +10% parameter change
+          
+          # Calculate VC with +10% parameter change
           increased_params = baseline_params.copy()
           increased_params[param_info["code"]] *= 1.1
           increased_vc = calculate_vectorial_capacity(
@@ -264,8 +258,8 @@ def run():
               increased_params["b"], increased_params["p"], 
               increased_params["n"]
           )
-        
-        # Calculate VC with -10% parameter change
+          
+          # Calculate VC with -10% parameter change
           decreased_params = baseline_params.copy()
           decreased_params[param_info["code"]] *= 0.9
           decreased_vc = calculate_vectorial_capacity(
@@ -273,59 +267,59 @@ def run():
               decreased_params["b"], decreased_params["p"], 
               decreased_params["n"]
           )
-        
-        # Calculate percent changes
+          
+          # Calculate percent changes
           pct_change_up = ((increased_vc - baseline_vc) / baseline_vc) * 100 if baseline_vc > 0 else 0
           pct_change_down = ((decreased_vc - baseline_vc) / baseline_vc) * 100 if baseline_vc > 0 else 0
-        
-        # Store results - using plain numbers instead of formatted strings
+          
+          # Store results - using plain numbers instead of formatted strings
           impact_data[param_name] = {
               "Current Value": param_info["value"],
               "+10% Change": pct_change_up,  # Store as number, not string
               "-10% Change": pct_change_down  # Store as number, not string
           }
-    
-    # Create a DataFrame
+      
+      # Create a DataFrame
       impact_df = pd.DataFrame(impact_data).T.reset_index()
       impact_df.columns = ["Parameter", "Current Value", "+10% Parameter → %ΔV", "-10% Parameter → %ΔV"]
-    
-    # Display the table - WITHOUT complex styling that may cause errors
+      
+      # Display the table - WITHOUT complex styling that may cause errors
       st.dataframe(impact_df)
-    
-    # For display purposes, create a formatted version
+      
+      # For display purposes, create a formatted version
       impact_df_display = impact_df.copy()
       impact_df_display["+10% Parameter → %ΔV"] = impact_df_display["+10% Parameter → %ΔV"].apply(lambda x: f"{x:.1f}%")
       impact_df_display["-10% Parameter → %ΔV"] = impact_df_display["-10% Parameter → %ΔV"].apply(lambda x: f"{x:.1f}%")
       st.write("Parameter Impact Table (Formatted):")
       st.dataframe(impact_df_display)
-    
-    # Create bar chart to visualize parameter impact
+      
+      # Create bar chart to visualize parameter impact
       try:
-        # Only use plotly if it's available
+          # Only use plotly if it's available
           if PLOTLY_AVAILABLE:
               fig_impact = go.Figure()
-            
-            # Extract numeric values - already numbers, no need to convert from strings
+              
+              # Extract numeric values - already numbers, no need to convert from strings
               plus_values = impact_df["+10% Parameter → %ΔV"].tolist()
               minus_values = impact_df["-10% Parameter → %ΔV"].tolist()
-            
-            # Add bars for +10% impact
+              
+              # Add bars for +10% impact
               fig_impact.add_trace(go.Bar(
                   x=impact_df["Parameter"],
                   y=plus_values,
                   name="+10% Parameter Change",
                   marker_color='forestgreen'
               ))
-            
-            # Add bars for -10% impact
+              
+              # Add bars for -10% impact
               fig_impact.add_trace(go.Bar(
                   x=impact_df["Parameter"],
                   y=minus_values,
                   name="-10% Parameter Change",
                   marker_color='crimson'
               ))
-            
-            # Update layout
+              
+              # Update layout
               fig_impact.update_layout(
                   title="Impact of ±10% Parameter Changes on Vectorial Capacity",
                   xaxis_title="Parameter",
@@ -333,58 +327,58 @@ def run():
                   barmode='group',
                   height=500
               )
-            
+              
               st.plotly_chart(fig_impact, use_container_width=True)
           else:
-            # Fallback to matplotlib if plotly is not available
+              # Fallback to matplotlib if plotly is not available
               fig, ax = plt.subplots(figsize=(10, 6))
-            
-            # Extract numeric values - already numbers
+              
+              # Extract numeric values - already numbers
               plus_values = impact_df["+10% Parameter → %ΔV"].tolist()
               minus_values = impact_df["-10% Parameter → %ΔV"].tolist()
-            
-            # Set width and positions for bars
+              
+              # Set width and positions for bars
               x = np.arange(len(impact_df["Parameter"]))
               width = 0.35
-            
-            # Create bars
+              
+              # Create bars
               ax.bar(x - width/2, plus_values, width, label='+10% Parameter Change', color='forestgreen')
               ax.bar(x + width/2, minus_values, width, label='-10% Parameter Change', color='crimson')
-            
-            # Add labels and legend
+              
+              # Add labels and legend
               ax.set_xlabel('Parameter')
               ax.set_ylabel('% Change in Vectorial Capacity')
               ax.set_title('Impact of ±10% Parameter Changes on Vectorial Capacity')
               ax.set_xticks(x)
               ax.set_xticklabels(impact_df["Parameter"], rotation=45, ha='right')
               ax.legend()
-            
+              
               fig.tight_layout()
               st.pyplot(fig)
       except Exception as e:
           st.error(f"Could not create bar chart visualization: {e}")
           st.write("Parameter impact is shown in the table above.")
-          
-          # Explanation of parameter impacts
-            st.subheader("Key Parameter Effects")
-            st.markdown("""
-            **Parameter Impact Analysis:**
-          
-            - **Daily survivorship (p)** has the most dramatic effect on vectorial capacity, showing an exponential relationship
-              (a 10% increase can lead to >200% increase in vectorial capacity in some scenarios)
-          
-            - **Biting rate (a)** has a squared relationship with vectorial capacity
-              (a 10% increase results in approximately 21% increase in vectorial capacity)
-          
-            - **Vector:host ratio (m)** has a linear relationship
-              (a 10% increase results in approximately 10% increase in vectorial capacity)
-          
-            - **Extrinsic Incubation Period (n)** has an inverse relationship
-              (a 10% decrease can increase vectorial capacity)
-          
-            This analysis helps prioritize intervention strategies - targeting parameters with the steepest curves 
-            (like daily survivorship) will have the greatest impact on reducing disease transmission.
-            """)
+      
+      # Explanation of parameter impacts
+      st.subheader("Key Parameter Effects")
+      st.markdown("""
+      **Parameter Impact Analysis:**
+      
+      - **Daily survivorship (p)** has the most dramatic effect on vectorial capacity, showing an exponential relationship
+        (a 10% increase can lead to >200% increase in vectorial capacity in some scenarios)
+      
+      - **Biting rate (a)** has a squared relationship with vectorial capacity
+        (a 10% increase results in approximately 21% increase in vectorial capacity)
+      
+      - **Vector:host ratio (m)** has a linear relationship
+        (a 10% increase results in approximately 10% increase in vectorial capacity)
+      
+      - **Extrinsic Incubation Period (n)** has an inverse relationship
+        (a 10% decrease can increase vectorial capacity)
+      
+      This analysis helps prioritize intervention strategies - targeting parameters with the steepest curves 
+      (like daily survivorship) will have the greatest impact on reducing disease transmission.
+      """)
   
   with tab2:
       st.header("Sensitivity Analysis")
