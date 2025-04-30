@@ -135,31 +135,101 @@ def run():
     # Create tabs for different views
     tab1, tab2, tab3, tab4 = st.tabs(["Epidemic Curve", "Sensitivity Analysis", "Parameter Relationships", "Data Table"])
     
-    with tab1:
-        st.header("Epidemic Curve")
-        
-        # Display the plot
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(results['Time'], results['Cases'], label='Active Cases', color='red', linewidth=2)
-        ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
-        ax.plot(results['Time'], results['Immune'], label='Immune', color='green', linewidth=2)
-        ax.plot(results['Time'], results['Total'], label='Total Population', color='black', linestyle='--', linewidth=1)
-        
-        ax.set_xlabel('Time (Generations)', fontsize=12)
-        ax.set_ylabel('Number of Individuals', fontsize=12)
-        ax.set_title('Reed-Frost Epidemic Curve', fontsize=14)
-        ax.legend(fontsize=10)
-        ax.grid(True, alpha=0.3)
-        
-        st.pyplot(fig)
-        
-        # Add download button for the plot
-        st.download_button(
-            label="Download Plot",
-            data=get_image_download_link(fig),
-            file_name="epidemic_curve.png",
-            mime="image/png"
-        )
+   with tab1:
+    st.header("Epidemic Curve")
+    
+    # Display the plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(results['Time'], results['Cases'], label='Active Cases', color='red', linewidth=2)
+    ax.plot(results['Time'], results['Susceptible'], label='Susceptible', color='blue', linewidth=2)
+    ax.plot(results['Time'], results['Immune'], label='Immune', color='green', linewidth=2)
+    ax.plot(results['Time'], results['Total'], label='Total Population', color='black', linestyle='--', linewidth=1)
+    
+    ax.set_xlabel('Time (Generations)', fontsize=12)
+    ax.set_ylabel('Number of Individuals', fontsize=12)
+    ax.set_title('Reed-Frost Epidemic Curve', fontsize=14)
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3)
+    
+    st.pyplot(fig)
+    
+    # Add download button for the plot
+    st.download_button(
+        label="Download Plot",
+        data=get_image_download_link(fig),
+        file_name="epidemic_curve.png",
+        mime="image/png"
+    )
+    
+    # Add epidemic curve interpretation
+    st.subheader("Interpretation")
+    
+    # Calculate key epidemic metrics for interpretation
+    peak_time = results['Cases'].idxmax()
+    peak_value = results['Cases'].max()
+    epidemic_duration = results['Cases'][results['Cases'] > 0.01].count()
+    final_immune = results['Immune'].iloc[-1]
+    final_susceptible = results['Susceptible'].iloc[-1]
+    initial_population = results['Total'].iloc[0]
+    
+    # Calculate attack rate (percentage of initial population that gets infected)
+    attack_rate = (final_immune / initial_population) * 100
+    
+    st.write("""
+    ### Key Phases of the Epidemic Curve
+    
+    **Introduction Phase**: The early period when cases begin to increase. This phase shows how quickly the disease spreads initially from the seed cases.
+    
+    **Growth Phase**: The period of exponential growth where each case generates multiple new cases. The steepness of this curve indicates the transmission rate.
+    
+    **Peak Phase**: The point of maximum active cases (shown in red), occurring at time period {} with {} cases. This represents the maximum burden on healthcare systems.
+    
+    **Decline Phase**: Cases decrease as the susceptible population (blue line) is depleted and more individuals become immune (green line).
+    
+    **Endemic/Extinction Phase**: The final stage where the disease either disappears or reaches a stable, endemic level depending on population dynamics.
+    """.format(peak_time, round(peak_value, 2)))
+    
+    st.write("""
+    ### Epidemic Outcomes
+    
+    **Attack Rate**: Approximately {}% of the initial population became infected during this epidemic.
+    
+    **Duration**: The active epidemic lasted approximately {} generations.
+    
+    **Herd Immunity Threshold**: The point where the epidemic begins to decline occurs when enough of the population has become immune to slow transmission.
+    
+    **Final Susceptible Population**: {} individuals remained susceptible, representing potential vulnerability to future outbreaks.
+    """.format(round(attack_rate, 2), epidemic_duration, round(final_susceptible, 2)))
+    
+    # Add interpretation based on current parameter values
+    if p < 0.05:
+        transmission_text = "The low probability of effective contact (P={}) results in limited disease spread. Each infected person generates fewer than one new case on average, leading to a small outbreak that quickly dies out.".format(p)
+    elif p < 0.2:
+        transmission_text = "The moderate probability of effective contact (P={}) allows for sustained transmission. The epidemic grows steadily before eventually declining as immunity builds in the population.".format(p)
+    else:
+        transmission_text = "The high probability of effective contact (P={}) leads to rapid disease spread. The epidemic grows quickly, reaches a high peak, and affects a large proportion of the susceptible population.".format(p)
+    
+    if b > 0 or i > 0:
+        demographic_text = "The addition of new susceptibles through births (B={}) and/or immigration (I={}) impacts the epidemic tail, potentially allowing for prolonged transmission or multiple waves.".format(b, i)
+    else:
+        demographic_text = "Without new susceptibles entering the population, the epidemic follows a classic single-wave pattern that eventually burns out once sufficient immunity is achieved."
+    
+    if d > 0 or m > 0:
+        mortality_text = "Population loss through natural deaths (D={}) and/or disease mortality (M={}) reduces both the susceptible and immune populations, affecting the final epidemic size and potentially allowing for resurgence if immunity is lost.".format(d, m)
+    else:
+        mortality_text = "With no population loss, the total population remains constant, and the final state represents the complete redistribution of individuals between susceptible and immune compartments."
+    
+    st.write("""
+    ### Impact of Current Parameters
+    
+    **Transmission Dynamics**: {}
+    
+    **Population Dynamics**: {}
+    
+    **Mortality Effects**: {}
+    
+    **Control Implications**: Modify parameters to see how interventions like reducing contact rates (lowering P), vaccination (reducing initial S0), or other measures affect the epidemic curve.
+    """.format(transmission_text, demographic_text, mortality_text))
     
     with tab2:
         st.header("Sensitivity Analysis")
