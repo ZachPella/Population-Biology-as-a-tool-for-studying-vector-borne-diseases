@@ -1,4 +1,3 @@
-
 # First import streamlit
 import streamlit as st
 import numpy as np
@@ -120,65 +119,92 @@ def run():
   else:
       critical_daily_survival = 0
   
+  # =====================================================================
+  # CHANGE #1: REPLACE THIS SECTION WITH NEW GAUGE VISUALIZATION
+  # =====================================================================
   # Display the overall statistics with new gauge visualization
   st.header("Vectorial Capacity Results")
   
-  # Create two columns - gauge on left, metrics on right
-  col1, col2 = st.columns([3, 2])
-  
-  with col1:
-      # Create a gauge visualization for vectorial capacity
-      # Define a reference value (0.587) from the table in images
-      reference_value = 0.587
+  # Try to use plotly for the gauge if available
+  try:
+      if PLOTLY_AVAILABLE:
+          # Create two columns - gauge on left, metrics on right
+          col1, col2 = st.columns([3, 2])
+          
+          with col1:
+              # Create a gauge visualization for vectorial capacity
+              # Define a reference value (0.587) from the table in images
+              reference_value = 0.587
+              
+              # Calculate percent change
+              percent_change = ((vectorial_capacity - reference_value) / reference_value) * 100 if reference_value > 0 else 0
+              
+              # Create a gauge figure
+              fig = go.Figure(go.Indicator(
+                  mode="gauge+number+delta",
+                  value=vectorial_capacity,
+                  delta={'reference': reference_value, 'relative': False, 'valueformat': '.3f'},
+                  title={'text': "Vectorial Capacity", 'font': {'size': 24}},
+                  gauge={
+                      'axis': {'range': [None, max(5, vectorial_capacity * 1.5)]},
+                      'bar': {'color': "darkblue"},
+                      'bgcolor': "white",
+                      'borderwidth': 2,
+                      'bordercolor': "gray",
+                      'steps': [
+                          {'range': [0, 0.5], 'color': "lightgreen"},
+                          {'range': [0.5, 1], 'color': "yellow"},
+                          {'range': [1, max(5, vectorial_capacity * 1.5)], 'color': "salmon"}
+                      ],
+                      'threshold': {
+                          'line': {'color': "red", 'width': 4},
+                          'thickness': 0.75,
+                          'value': reference_value
+                      }
+                  }
+              ))
+              
+              fig.update_layout(
+                  height=300,
+                  margin=dict(l=20, r=20, t=50, b=20),
+              )
+              
+              st.plotly_chart(fig, use_container_width=True)
+              
+              # Add caption for the gauge
+              st.caption(f"Reference baseline value (red line): {reference_value}")
+              st.caption(f"Current value: {vectorial_capacity:.3f} ({percent_change:+.1f}%)")
+          
+          with col2:
+              # Display metrics in vertical stack
+              st.metric("Vectorial Capacity (C)", f"{vectorial_capacity:.4f}")
+              st.metric("Basic Reproduction Number (R₀)", f"{r0:.4f}", 
+                     help="R₀ = Vectorial Capacity × Vector Competence ÷ Human Recovery Rate")
+              st.metric("Critical Daily Survival", f"{critical_daily_survival:.4f}",
+                     delta=f"{(daily_survival - critical_daily_survival):.4f}", 
+                     delta_color="normal",
+                     help="Minimum daily survival rate needed for vectors to live long enough to transmit the pathogen")
+      else:
+          raise ImportError("Plotly not available")
+  except:
+      # Fallback to standard metrics display
+      col1, col2, col3 = st.columns(3)
       
-      # Calculate percent change
-      percent_change = ((vectorial_capacity - reference_value) / reference_value) * 100 if reference_value > 0 else 0
-      
-      # Create a gauge figure
-      fig = go.Figure(go.Indicator(
-          mode="gauge+number+delta",
-          value=vectorial_capacity,
-          delta={'reference': reference_value, 'relative': False, 'valueformat': '.3f'},
-          title={'text': "Vectorial Capacity", 'font': {'size': 24}},
-          gauge={
-              'axis': {'range': [None, max(5, vectorial_capacity * 1.5)]},
-              'bar': {'color': "darkblue"},
-              'bgcolor': "white",
-              'borderwidth': 2,
-              'bordercolor': "gray",
-              'steps': [
-                  {'range': [0, 0.5], 'color': "lightgreen"},
-                  {'range': [0.5, 1], 'color': "yellow"},
-                  {'range': [1, max(5, vectorial_capacity * 1.5)], 'color': "salmon"}
-              ],
-              'threshold': {
-                  'line': {'color': "red", 'width': 4},
-                  'thickness': 0.75,
-                  'value': reference_value
-              }
-          }
-      ))
-      
-      fig.update_layout(
-          height=300,
-          margin=dict(l=20, r=20, t=50, b=20),
-      )
-      
-      st.plotly_chart(fig, use_container_width=True)
-      
-      # Add caption for the gauge
-      st.caption(f"Reference baseline value (red line): {reference_value}")
-      st.caption(f"Current value: {vectorial_capacity:.3f} ({percent_change:+.1f}%)")
-  
-  with col2:
-      # Display metrics in vertical stack
-      st.metric("Vectorial Capacity (C)", f"{vectorial_capacity:.4f}")
-      st.metric("Basic Reproduction Number (R₀)", f"{r0:.4f}", 
-               help="R₀ = Vectorial Capacity × Vector Competence ÷ Human Recovery Rate")
-      st.metric("Critical Daily Survival", f"{critical_daily_survival:.4f}",
-               delta=f"{(daily_survival - critical_daily_survival):.4f}", 
-               delta_color="normal",
-               help="Minimum daily survival rate needed for vectors to live long enough to transmit the pathogen")
+      with col1:
+          st.metric("Vectorial Capacity (C)", f"{vectorial_capacity:.4f}")
+          reference_value = 0.587
+          percent_change = ((vectorial_capacity - reference_value) / reference_value) * 100 if reference_value > 0 else 0
+          st.caption(f"Change from reference: {percent_change:+.1f}%")
+          
+      with col2:
+          st.metric("Basic Reproduction Number (R₀)", f"{r0:.4f}", 
+                 help="R₀ = Vectorial Capacity × Vector Competence ÷ Human Recovery Rate")
+          
+      with col3:
+          st.metric("Critical Daily Survival", f"{critical_daily_survival:.4f}",
+                 delta=f"{(daily_survival - critical_daily_survival):.4f}", 
+                 delta_color="normal",
+                 help="Minimum daily survival rate needed for vectors to live long enough to transmit the pathogen")
   
   # Helper function to convert figure to downloadable data
   def fig_to_bytes(fig):
@@ -188,9 +214,15 @@ def run():
       buf.seek(0)
       return buf
   
+  # =====================================================================
+  # CHANGE #2: UPDATE TAB DECLARATION TO INCLUDE THE NEW TAB
+  # =====================================================================
   # Create tabs for different analyses
   tab1, tab2, tab3, tab4, tab5 = st.tabs(["Vectorial Capacity", "Sensitivity Analysis", "Host Preference Impact", "Parameter Relationships", "Data Table"])
   
+  # =====================================================================
+  # CHANGE #3: ADD NEW TAB IMPLEMENTATION
+  # =====================================================================
   with tab1:
       st.header("Parameter Impact on Vectorial Capacity")
       
@@ -258,38 +290,70 @@ def run():
       st.dataframe(impact_df.style.background_gradient(cmap='RdYlGn', subset=["+10% Parameter → %ΔV"]).background_gradient(cmap='RdYlGn_r', subset=["-10% Parameter → %ΔV"]))
       
       # Create bar chart to visualize parameter impact
-      fig_impact = go.Figure()
-      
-      # Extract numeric values from percentage strings
-      plus_values = [float(x.strip('%')) for x in impact_df["+10% Parameter → %ΔV"]]
-      minus_values = [float(x.strip('%')) for x in impact_df["-10% Parameter → %ΔV"]]
-      
-      # Add bars for +10% impact
-      fig_impact.add_trace(go.Bar(
-          x=impact_df["Parameter"],
-          y=plus_values,
-          name="+10% Parameter Change",
-          marker_color='forestgreen'
-      ))
-      
-      # Add bars for -10% impact
-      fig_impact.add_trace(go.Bar(
-          x=impact_df["Parameter"],
-          y=minus_values,
-          name="-10% Parameter Change",
-          marker_color='crimson'
-      ))
-      
-      # Update layout
-      fig_impact.update_layout(
-          title="Impact of ±10% Parameter Changes on Vectorial Capacity",
-          xaxis_title="Parameter",
-          yaxis_title="% Change in Vectorial Capacity",
-          barmode='group',
-          height=500
-      )
-      
-      st.plotly_chart(fig_impact, use_container_width=True)
+      try:
+          # Only use plotly if it's available
+          if PLOTLY_AVAILABLE:
+              fig_impact = go.Figure()
+              
+              # Extract numeric values from percentage strings
+              plus_values = [float(x.strip('%')) for x in impact_df["+10% Parameter → %ΔV"]]
+              minus_values = [float(x.strip('%')) for x in impact_df["-10% Parameter → %ΔV"]]
+              
+              # Add bars for +10% impact
+              fig_impact.add_trace(go.Bar(
+                  x=impact_df["Parameter"],
+                  y=plus_values,
+                  name="+10% Parameter Change",
+                  marker_color='forestgreen'
+              ))
+              
+              # Add bars for -10% impact
+              fig_impact.add_trace(go.Bar(
+                  x=impact_df["Parameter"],
+                  y=minus_values,
+                  name="-10% Parameter Change",
+                  marker_color='crimson'
+              ))
+              
+              # Update layout
+              fig_impact.update_layout(
+                  title="Impact of ±10% Parameter Changes on Vectorial Capacity",
+                  xaxis_title="Parameter",
+                  yaxis_title="% Change in Vectorial Capacity",
+                  barmode='group',
+                  height=500
+              )
+              
+              st.plotly_chart(fig_impact, use_container_width=True)
+          else:
+              # Fallback to matplotlib if plotly is not available
+              fig, ax = plt.subplots(figsize=(10, 6))
+              
+              # Extract numeric values
+              plus_values = [float(x.strip('%')) for x in impact_df["+10% Parameter → %ΔV"]]
+              minus_values = [float(x.strip('%')) for x in impact_df["-10% Parameter → %ΔV"]]
+              
+              # Set width and positions for bars
+              x = np.arange(len(impact_df["Parameter"]))
+              width = 0.35
+              
+              # Create bars
+              ax.bar(x - width/2, plus_values, width, label='+10% Parameter Change', color='forestgreen')
+              ax.bar(x + width/2, minus_values, width, label='-10% Parameter Change', color='crimson')
+              
+              # Add labels and legend
+              ax.set_xlabel('Parameter')
+              ax.set_ylabel('% Change in Vectorial Capacity')
+              ax.set_title('Impact of ±10% Parameter Changes on Vectorial Capacity')
+              ax.set_xticks(x)
+              ax.set_xticklabels(impact_df["Parameter"], rotation=45, ha='right')
+              ax.legend()
+              
+              fig.tight_layout()
+              st.pyplot(fig)
+      except Exception as e:
+          st.error(f"Could not create bar chart visualization: {e}")
+          st.write("Parameter impact is shown in the table above.")
       
       # Explanation of parameter impacts
       st.subheader("Key Parameter Effects")
@@ -312,6 +376,9 @@ def run():
       (like daily survivorship) will have the greatest impact on reducing disease transmission.
       """)
   
+  # =====================================================================
+  # THE REST OF YOUR TABS REMAIN THE SAME
+  # =====================================================================
   with tab2:
       st.header("Sensitivity Analysis")
       
