@@ -661,46 +661,160 @@ def run():
                 file_name=f"reed_frost_{x_name}_{y_name}_{metric.lower().replace(' ', '_')}.png",
                 mime="image/png"
             )
-            
-            # Add explanation
-            st.subheader("Parameter Interaction Effects")
-            
-            if (x_name == "p" and y_name == "s0") or (x_name == "s0" and y_name == "p"):
-                st.write("""
-                **Key observations:**
+
+                # Add explanation
+                st.subheader("Parameter Interaction Effects")
                 
-                The probability of effective contact (P) and the initial susceptible population (S₀) interact to determine 
-                epidemic dynamics. Areas with darker colors indicate conditions more favorable for disease spread.
-                
-                The interaction between these parameters is important for understanding epidemic thresholds - at low values 
-                of both parameters, epidemics may not occur, while high values of both lead to large outbreaks.
-                
-                **Control implications:**
-                
-                Both reducing contact rates and reducing the susceptible population (e.g., through vaccination) can help 
-                control disease spread.
-                
-                The contour map shows that multiple combinations of parameters can achieve the same outcome, allowing for 
-                flexible control strategies.
-                """)
-            else:
-                st.write(f"""
-                **Key observations:**
-                
-                This heatmap shows how {metric.lower()} changes as a function of both {x_param.lower()} and {y_param.lower()}.
-                
-                Darker colors indicate conditions more favorable for disease spread, while lighter colors represent conditions 
-                less conducive to transmission.
-                
-                The steepness of the gradient indicates the sensitivity of the outcome to changes in each parameter.
-                
-                **Control implications:**
-                
-                Understanding parameter interactions helps identify the most effective combination of interventions.
-                
-                Some parameter combinations may have synergistic effects on reducing disease spread.
-                """)
-    
+                if (x_name == "p" and y_name == "s0") or (x_name == "s0" and y_name == "p"):
+                    st.write("""
+                    ### Probability of Effective Contact (P) × Initial Susceptible Population (S₀)
+                    
+                    **Key observations:**
+                    
+                    The probability of effective contact (P) and the initial susceptible population (S₀) interact in ways that directly relate to the Reed-Frost equation $C_{t+1} = S_t \\cdot (1 - (1-p)^{C_t})$. The heatmap reveals:
+                    
+                    - **Epidemic Threshold**: At low P values (<0.1), epidemics fail to establish regardless of S₀, creating a clear threshold boundary visible on the heatmap
+                    - **Nonlinear Interactions**: The relationship between P and S₀ is not simply additive - increasing both parameters simultaneously creates a stronger effect than would be predicted by changing each parameter individually
+                    - **Diminishing Returns**: At very high P values, further increases have minimal effect on outcomes when S₀ is limited
+                    - **Scale Dependence**: The epidemic threshold for P decreases as S₀ increases, meaning larger populations can sustain epidemics at lower contact probabilities
+                    
+                    **Mathematical insights:**
+                    
+                    These interactions demonstrate fundamental principles of epidemic theory:
+                    
+                    - The basic reproductive number (R₀) in the Reed-Frost model is related to both P and S₀
+                    - The threshold effect occurs when P reaches a value where each case generates at least one new case on average
+                    - The contour lines on the heatmap represent combinations of P and S₀ that produce equal epidemic sizes
+                    
+                    **Control implications:**
+                    
+                    This parameter interaction provides multiple approaches to disease control:
+                    
+                    - Intervention strategies can target either parameter or both simultaneously
+                    - Vaccination reduces S₀ while social distancing reduces P, creating a complementary effect
+                    - The contour map reveals that a moderate reduction in both parameters may be more achievable than a large reduction in either one alone
+                    - In large populations (high S₀), even small increases in P can push a disease over the epidemic threshold
+                    """)
+                elif (x_name == "p" and y_name == "c0") or (x_name == "c0" and y_name == "p"):
+                    st.write("""
+                    ### Probability of Effective Contact (P) × Initial Cases (C₀)
+                    
+                    **Key observations:**
+                    
+                    The heatmap reveals important interactions between the probability of effective contact (P) and the initial number of cases (C₀):
+                    
+                    - **Threshold Effects**: At low P values, increasing C₀ has minimal impact on epidemic outcomes
+                    - **Critical Points**: As P approaches the epidemic threshold, the number of initial cases becomes more influential
+                    - **Saturation Effects**: At high P values, even a single initial case (C₀=1) leads to a full epidemic
+                    - **Time-Shifting**: While not visible on the heatmap, higher C₀ values primarily affect epidemic timing rather than final size
+                    
+                    **Mathematical insights:**
+                    
+                    The Reed-Frost equation $C_{t+1} = S_t \\cdot (1 - (1-p)^{C_t})$ shows that C₀ appears as an exponent in the first generation calculation. This means:
+                    
+                    - The initial force of infection $(1-(1-P)^{C_0})$ increases nonlinearly with C₀
+                    - At low P values, multiple initial cases are needed to overcome stochastic extinction
+                    - At high P values, the term $(1-P)^{C_t}$ quickly approaches zero even with small C₀
+                    
+                    **Control implications:**
+                    
+                    These interactions inform early epidemic response strategies:
+                    
+                    - When P is near the epidemic threshold, aggressive case finding and isolation can prevent an epidemic
+                    - When P is well above threshold, resources may be better allocated to reducing contact rates than finding every case
+                    - Early detection systems provide the greatest benefit when P can simultaneously be reduced through control measures
+                    - The effectiveness of travel restrictions or border controls depends on both the number of imported cases and the local contact rates
+                    """)
+                elif (x_name == "b" and y_name == "p") or (x_name == "p" and y_name == "b"):
+                    st.write("""
+                    ### Birth Rate (B) × Probability of Effective Contact (P)
+                    
+                    **Key observations:**
+                    
+                    The birth rate (B) and probability of effective contact (P) interact to determine whether a disease remains endemic:
+                    
+                    - **Endemic Thresholds**: At low P values, even high birth rates cannot sustain transmission
+                    - **Critical Zone**: The heatmap reveals a transition zone where the disease shifts from epidemic to endemic behavior
+                    - **Oscillatory Patterns**: In certain combinations of B and P, the disease may show cyclical patterns (not visible in the static heatmap)
+                    - **Intensity Gradient**: Higher values of both parameters lead to greater disease burden, but through different mechanisms
+                    
+                    **Mathematical insights:**
+                    
+                    In the modified Reed-Frost model that includes births:
+                    
+                    - Birth rate determines the inflow of new susceptibles, which can prevent the susceptible population from being depleted
+                    - Endemic equilibrium occurs when new infections balance new susceptibles entering the population
+                    - The interplay between P and B determines whether R₀ remains above 1 in the long term
+                    
+                    **Control implications:**
+                    
+                    This interaction has important implications for long-term disease management:
+                    
+                    - In high birth rate settings, maintaining control measures for longer periods may be necessary
+                    - Vaccination programs must account for the rate of new susceptibles entering the population
+                    - Reducing P has a more immediate effect, while managing birth-related susceptible inflow affects long-term dynamics
+                    - Many real-world childhood diseases (measles, chickenpox) persist as endemic diseases due precisely to this interaction
+                    """)
+                elif (x_name == "b" and y_name == "d") or (x_name == "d" and y_name == "b"):
+                    st.write("""
+                    ### Birth Rate (B) × Death Rate (D)
+                    
+                    **Key observations:**
+                    
+                    The birth rate (B) and death rate (D) together determine population dynamics and disease patterns:
+                    
+                    - **Population Stability**: When B≈D, the population size remains relatively stable
+                    - **Growing vs. Shrinking**: When B>D, the population grows, creating more susceptibles over time; when B<D, the population shrinks
+                    - **Turnover Effects**: Even with stable population size (B≈D), high values of both parameters create rapid population turnover
+                    - **Immunity Persistence**: High death rates can reduce population immunity by removing immune individuals
+                    
+                    **Mathematical insights:**
+                    
+                    In population models:
+                    
+                    - The difference (B-D) determines net population growth
+                    - Population turnover (min(B,D)) affects how quickly the population composition changes
+                    - In a growing population, the effective reproduction number may increase over time as susceptibles accumulate
+                    
+                    **Control implications:**
+                    
+                    Demographic parameters influence long-term disease management:
+                    
+                    - In populations with high turnover, maintaining high vaccination coverage is essential
+                    - Endemic diseases may persist more easily in populations with high birth rates
+                    - The demographic profile of a population should inform the intensity and duration of control measures
+                    - Age-structured interventions become particularly important when birth and death rates create specific population age structures
+                    """)
+                else:
+                    st.write(f"""
+                    ### {x_param} × {y_param} Interaction
+                    
+                    **Key observations:**
+                    
+                    This heatmap reveals how {metric.lower()} changes as a function of both {x_param.lower()} and {y_param.lower()}:
+                    
+                    - **Parameter Sensitivity**: The gradient patterns show which parameter has stronger influence on outcomes
+                    - **Interaction Zones**: Regions of rapid color change indicate critical combinations where small parameter shifts cause large outcome changes
+                    - **Threshold Effects**: Clear boundaries between light and dark regions may indicate epidemic thresholds
+                    - **Optimum Combinations**: The contour patterns reveal combinations of parameters that produce equivalent outcomes
+                    
+                    **Mathematical insights:**
+                    
+                    The Reed-Frost model demonstrates that:
+                    
+                    - Disease transmission is inherently nonlinear, creating complex parameter interactions
+                    - Some parameter combinations create compensatory effects, where changes in one parameter can offset changes in another
+                    - The contour lines represent sets of parameter values that yield equal epidemic outcomes
+                    
+                    **Control implications:**
+                    
+                    Understanding these interactions improves intervention planning:
+                    
+                    - Targeting multiple parameters simultaneously may be more efficient than focusing on a single aspect
+                    - The steepest gradient indicates which parameter would provide the greatest benefit if modified
+                    - When resources are limited, the heatmap helps identify the most efficient parameter combinations to target
+                    - Real-world control programs should consider these interaction effects when designing multi-faceted interventions
+                    """)
     with tab4:
         st.header("Data Table")
         
