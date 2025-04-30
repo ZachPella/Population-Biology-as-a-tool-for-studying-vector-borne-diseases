@@ -391,49 +391,135 @@ def run():
             
             st.pyplot(fig2)
         
-        # Add interpretation
+                # Add interpretation
         st.subheader("Interpretation")
         
         if param_name == "p":
             st.write("""
-            **Probability of Effective Contact (P)** has a significant impact on epidemic dynamics. As P increases, 
-            both peak cases and total infected increase. When P is small, the epidemic may not take off at all.
+            ### Probability of Effective Contact (P)
             
-            **Control implications**: Reducing the probability of effective contact through interventions like social distancing, 
-            masks, or hand hygiene can effectively reduce both peak and total cases.
+            The sensitivity analysis demonstrates how the **probability of effective contact (P)** is a critical determinant of epidemic dynamics. As shown in the Reed-Frost equation $C_{t+1} = S_t \\cdot (1 - (1-p)^{C_t})$, P directly determines how many susceptibles become infected in each generation.
+            
+            **Key observations from the model:**
+            - At P values below 0.1, epidemics may not establish (or "take off")
+            - As P increases from 0.1 to 0.5, both the peak height and total cases increase rapidly
+            - At high P values (>0.5), the epidemic curve shifts left, reaching peak faster
+            - The final size of the epidemic is highly sensitive to even small changes in P
+            
+            **Control implications**: Reducing the probability of effective contact is one of the most powerful intervention strategies. Each 10% reduction in P yields a proportionally larger reduction in total cases. Public health measures that lower contact probability (physical distancing, masks, hand hygiene) can dramatically change epidemic outcomes even if they don't completely stop transmission.
+            
+            **Mathematical insight**: The nonlinear relationship between P and total cases emerges from the compounding effect of multiple generations of transmission. Small reductions in P are amplified over successive infection cycles.
             """)
         elif param_name == "c0":
             st.write("""
-            **Initial Cases (C0)** primarily affects the timing of the epidemic rather than its final size. With more initial cases, 
-            the peak occurs earlier but reaches approximately the same height. The total number infected is relatively insensitive 
-            to initial cases.
+            ### Initial Cases (C0)
             
-            **Control implications**: Early detection and isolation of initial cases can delay the epidemic but may not substantially 
-            reduce its final size unless combined with other interventions.
+            The **initial number of cases (C0)** represents the seed of the epidemic. The Reed-Frost model demonstrates that while C0 affects the timing of the epidemic, it has limited impact on the final epidemic size in closed populations.
+            
+            **Key observations from the model:**
+            - Higher C0 values cause the epidemic to reach its peak earlier
+            - Final epidemic size remains nearly constant regardless of C0, provided P is sufficient for epidemic spread
+            - In deterministic models, even a single case (C0=1) will cause an epidemic if P is above threshold
+            - The timing shift occurs because more initial cases create more infections in the first generation
+            
+            **Control implications**: Early case detection and isolation can delay the epidemic peak, buying valuable time for implementing other control measures or developing vaccines. However, reducing initial cases alone is not sufficient to substantially change the final epidemic size unless combined with interventions that reduce P or S0.
+            
+            **Mathematical insight**: The Reed-Frost equation shows that timing shifts occur because a larger C0 value increases the initial force of infection $(1-(1-P)^{C_t})$, but the overall epidemic trajectory follows similar dynamics once established.
             """)
         elif param_name == "s0":
             st.write("""
-            **Initial Susceptible Population (S0)** strongly affects both peak height and total cases. 
-            Larger susceptible populations lead to larger epidemics with higher peaks.
+            ### Initial Susceptible Population (S0)
             
-            **Control implications**: Reducing the susceptible population through vaccination or creating immune subpopulations 
-            through targeted protection can effectively reduce epidemic potential.
+            The **initial susceptible population (S0)** directly determines the potential size of the epidemic. The Reed-Frost model demonstrates a proportional relationship between S0 and both peak cases and total infected.
+            
+            **Key observations from the model:**
+            - Total cases scale almost linearly with S0 when other parameters remain constant
+            - Peak height increases proportionally with S0
+            - The shape of the epidemic curve remains similar, just scaled by population size
+            - Time to peak is only slightly affected by S0 (larger populations peak marginally later)
+            
+            **Control implications**: Reducing the susceptible population through vaccination or creating protected subpopulations is highly effective. The relationship is approximately linear - protecting 50% of the population through vaccination reduces the epidemic size by roughly 50%. This creates a "herd immunity" effect that can protect even unvaccinated individuals by reducing transmission opportunities.
+            
+            **Mathematical insight**: In the Reed-Frost equation, S0 appears as a direct multiplier of new cases. However, the actual fraction of susceptibles who become infected depends on the probability of effective contact (P) and the overall population dynamics.
             """)
         elif param_name == "b":
             st.write("""
-            **Birth Rate (B)** adds new susceptibles to the population over time. Higher birth rates can sustain transmission 
-            for longer periods and may lead to endemic disease patterns rather than a single epidemic wave.
+            ### Birth Rate (B)
             
-            **Control implications**: In populations with high birth rates, continuous control measures may be needed to prevent 
-            resurgence as new susceptibles enter the population.
+            The **birth rate parameter (B)** adds new susceptibles to the population over time, potentially sustaining transmission beyond a single epidemic wave. This moves the model from a simple closed-population epidemic to one that can model endemic disease patterns.
+            
+            **Key observations from the model:**
+            - With B=0, the epidemic follows a single wave pattern that eventually burns out
+            - As B increases, the tail of the epidemic curve extends, creating potential for multiple waves
+            - At high enough birth rates, a steady endemic state may establish
+            - New susceptibles extend the duration of the epidemic rather than increasing its peak height
+            
+            **Control implications**: In populations with high birth rates (e.g., many low-income countries), continuous control measures are needed even after the initial epidemic wave. Vaccination programs must be sustained to protect new susceptible cohorts, or endemic transmission may establish. This explains why elimination efforts must be particularly intensive in high-birth-rate settings.
+            
+            **Mathematical insight**: When birth rate is incorporated, the Reed-Frost model can demonstrate oscillatory behavior or steady endemic states similar to what's seen in real-world endemic diseases like measles, which show periodic epidemic cycles driven by the accumulation of new susceptible individuals.
+            """)
+        elif param_name == "i":
+            st.write("""
+            ### Immigration Rate (I)
+            
+            The **immigration parameter (I)** introduces new susceptibles from outside the population, which can sustain transmission similarly to births. This parameter is particularly relevant for modeling geographically connected populations.
+            
+            **Key observations from the model:**
+            - Immigration creates a continuous inflow of susceptibles that can maintain transmission
+            - Unlike birth rate which scales with population size, immigration is typically modeled as a constant inflow
+            - Even low immigration rates can prevent epidemic burnout if P is sufficient
+            - Immigration can trigger new epidemic waves after an initial wave has subsided
+            
+            **Control implications**: Border screening, traveler quarantine, or targeted vaccination of immigrants/travelers may be necessary to prevent reintroduction of disease. In geographically isolated areas (islands, remote communities), controlling immigration of infected individuals can be an effective strategy when elimination is the goal.
+            
+            **Mathematical insight**: Immigration differs from birth rate in that immigrants can enter already infected, creating new transmission chains even in largely immune populations. This makes immigration particularly important in metapopulation models that consider connected geographic regions.
+            """)
+        elif param_name == "d":
+            st.write("""
+            ### Death Rate (D)
+            
+            The **death rate parameter (D)** removes individuals from all compartments (susceptible, infected, immune), affecting population dynamics and potentially disease transmission.
+            
+            **Key observations from the model:**
+            - Higher death rates reduce the total population size over time
+            - Death reduces the number of susceptibles, potentially limiting epidemic size
+            - However, deaths also remove immune individuals, potentially increasing vulnerability to subsequent waves
+            - The overall effect depends on the interaction between death rate and other demographic parameters
+            
+            **Control implications**: In populations with high turnover (high birth and death rates), immunity from previous epidemics wanes more quickly at the population level, even if individual immunity is lifelong. This demographic turnover means that epidemic cycles may occur more frequently than in populations with lower turnover rates.
+            
+            **Mathematical insight**: Death rate creates a flow out of all compartments, while birth/immigration create flows into the susceptible compartment. The balance between these flows determines whether the epidemic is single-wave, endemic, or cyclic.
+            """)
+        elif param_name == "m":
+            st.write("""
+            ### Mortality Rate from Disease (M)
+            
+            The **disease mortality parameter (M)** specifically removes individuals from the infected compartment, representing case fatality from the disease.
+            
+            **Key observations from the model:**
+            - Disease mortality reduces the number of infected individuals who transition to immunity
+            - Higher disease mortality can slightly reduce transmission by shortening the infectious period
+            - The effect on epidemic dynamics is usually small unless M is very high
+            - Disease mortality primarily affects public health impact rather than transmission dynamics
+            
+            **Control implications**: While reducing disease mortality is a critical public health goal, interventions focused solely on reducing fatality (without affecting transmission) may have limited impact on epidemic spread. However, disease mortality indirectly affects transmission if it leads to behavior changes or public health responses that reduce contact rates.
+            
+            **Mathematical insight**: In the Reed-Frost model, disease mortality affects how many cases move from the infected to removed compartment due to death rather than recovery. This parameter is particularly important for diseases like Ebola with high case fatality rates, where mortality can significantly affect transmission dynamics.
             """)
         else:
             st.write(f"""
-            **{param_to_vary}** affects the epidemic dynamics by changing how quickly individuals move between the susceptible, 
-            infected, and recovered compartments. This parameter influences both the peak height and the total number of cases.
+            ### {param_to_vary}
             
-            **Control implications**: Understanding how this parameter affects disease spread can help design targeted interventions 
-            to mitigate outbreaks.
+            This parameter affects the epidemic dynamics by changing how individuals move between the susceptible, infected, and immune compartments in the Reed-Frost model. The sensitivity analysis shows how variations in this parameter affect both the epidemic curve shape and final outcome.
+            
+            **Key observations from the model:**
+            - Changes in this parameter create nonlinear effects in epidemic outcomes
+            - The relationship shown in the graph demonstrates potential thresholds or tipping points
+            - Both peak timing and final size are affected
+            
+            **Control implications**: Understanding how this parameter influences disease spread helps design targeted interventions that can efficiently mitigate outbreaks. By identifying which parameters have the strongest effect on outcomes, public health officials can prioritize the most effective control strategies.
+            
+            **Mathematical insight**: The Reed-Frost model demonstrates how even simple epidemic models can exhibit complex behaviors due to the interactions between parameters. This underscores the importance of sensitivity analysis in understanding epidemic dynamics.
             """)
     
     with tab3:
