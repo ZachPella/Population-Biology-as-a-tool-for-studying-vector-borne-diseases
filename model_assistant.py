@@ -347,7 +347,7 @@ When explaining mathematical concepts, be thorough but clear.""",
     if len(st.session_state.messages) == 0:
         # Single header with DNA icon
         st.markdown('<div class="main-container">', unsafe_allow_html=True)
-        st.markdown('<div class="custom-header">🧬 Population Biology Model Assistant</div>', unsafe_allow_html=True)
+        st.markdown('<div class="custom-header">🤖 Population Biology Model Assistant</div>', unsafe_allow_html=True)
         st.markdown('<p class="description-text">Ask questions about population biology models, epidemiology concepts, or get help with interpreting model results. This assistant has internet access to provide up-to-date information.</p>', unsafe_allow_html=True)
         
         # Add a tip box
