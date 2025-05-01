@@ -3,45 +3,21 @@ import streamlit as st
 import anthropic
 import os
 from datetime import datetime
-import base64
 from random import choice
 
 # Note: Do NOT call st.set_page_config() here since app.py already has it
-
-def add_bg_from_url(url):
-    """Add background image from URL"""
-    st.markdown(
-         f"""
-         <style>
-         .stApp {{
-             background-image: url({url});
-             background-attachment: fixed;
-             background-size: cover;
-             background-position: center;
-         }}
-         </style>
-         """,
-         unsafe_allow_html=True
-     )
 
 def local_css():
     """Define custom CSS styles"""
     st.markdown("""
     <style>
-    /* Customize chat messages */
-    .stChatMessage {
-        border-radius: 15px !important;
-        padding: 8px 12px;
-        margin-bottom: 10px;
-    }
-    
-    /* Container styling */
+    /* Main container styles */
     .main-container {
-        background-color: rgba(17, 17, 40, 0.7);
-        border-radius: 20px;
-        padding: 25px;
-        margin: 10px 0;
-        border: 1px solid rgba(120, 120, 255, 0.2);
+        background-color: rgba(17, 17, 40, 0.4);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 15px 0;
+        border: 1px solid rgba(100, 149, 237, 0.2);
         backdrop-filter: blur(10px);
     }
     
@@ -50,18 +26,22 @@ def local_css():
         font-family: 'Helvetica Neue', sans-serif;
         color: #E0E0FF;
         font-weight: 600;
-        font-size: 2rem;
-        margin-bottom: 5px;
-        text-shadow: 0px 0px 10px rgba(100, 149, 237, 0.5);
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     
     /* Description text */
     .description-text {
-        color: #C0C0FF;
-        font-size: 1rem;
+        color: #B8B8FF;
+        font-size: 0.95rem;
         font-weight: 300;
         line-height: 1.5;
         margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(120, 120, 255, 0.2);
     }
     
     /* Button styling */
@@ -70,7 +50,7 @@ def local_css():
         color: white !important;
         border-radius: 10px !important;
         border: none !important;
-        padding: 10px 15px !important;
+        padding: 8px 15px !important;
         transition: all 0.3s ease !important;
     }
     
@@ -81,33 +61,81 @@ def local_css():
     
     /* Chat input styling */
     .stChatInputContainer {
-        border-radius: 15px !important;
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        border: 1px solid rgba(120, 120, 255, 0.3) !important;
-        padding: 8px !important;
+        border-radius: 12px !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(120, 120, 255, 0.2) !important;
+        padding: 6px !important;
+        margin-top: 15px !important;
     }
     
-    /* Sidebar styling */
-    .css-1d391kg {
-        background-color: rgba(25, 25, 50, 0.9) !important;
+    /* Chat message styling */
+    .stChatMessage {
+        border-radius: 12px !important;
+        padding: 10px 15px !important;
+        margin-bottom: 8px !important;
     }
     
-    /* Custom info box */
-    .info-box {
-        background-color: rgba(100, 149, 237, 0.2);
+    /* Tip box styling */
+    .tip-box {
+        background-color: rgba(100, 149, 237, 0.15);
         border-left: 4px solid rgba(100, 149, 237, 0.7);
         padding: 10px 15px;
         border-radius: 0 10px 10px 0;
-        margin: 20px 0;
+        margin: 15px 0;
         font-size: 0.9rem;
+        color: #D0D0FF;
     }
     
-    /* Footer text */
+    /* Sample questions container */
+    .sample-container {
+        background-color: rgba(100, 149, 237, 0.1);
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin: 20px 0;
+    }
+    
+    .sample-header {
+        color: #D0D0FF;
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin-bottom: 15px;
+    }
+    
+    .sample-question {
+        color: #B8B8FF;
+        padding: 8px 5px;
+        margin-bottom: 5px;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .sample-question:before {
+        content: "•";
+        margin-right: 10px;
+        color: rgba(100, 149, 237, 0.8);
+    }
+    
+    /* Footer styling */
     .footer-text {
-        color: #A0A0D0;
+        color: #8888BB;
         font-size: 0.8rem;
         text-align: center;
-        margin-top: 30px;
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(120, 120, 255, 0.1);
+    }
+    
+    /* Sidebar styling */
+    .css-1544g2n {
+        padding-top: 2rem;
+    }
+    
+    .sidebar-header {
+        color: #E0E0FF;
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 15px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -129,26 +157,23 @@ def get_random_tip():
 def run():
     """Main function to run the assistant interface"""
     
-    # Apply visual enhancements
-    # add_bg_from_url("https://images.unsplash.com/photo-1557682250-27c44a49ea8d?q=80&w=2148&auto=format&fit=crop")
+    # Apply styling
     local_css()
     
     # Initialize session state for chat history if it doesn't exist
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
-    # Container for header
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
-    st.markdown('<h1 class="custom-header">🧬 Population Biology Model Assistant</h1>', unsafe_allow_html=True)
+    # Single header with DNA icon
+    st.markdown('<div class="custom-header">🧬 Population Biology Model Assistant</div>', unsafe_allow_html=True)
     st.markdown('<p class="description-text">Ask questions about population biology models, epidemiology concepts, or get help with interpreting model results. This assistant has internet access to provide up-to-date information.</p>', unsafe_allow_html=True)
     
-    # Add a random tip
-    st.markdown(f'<div class="info-box">💡 <b>Did you know?</b> {get_random_tip()}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Add a tip box
+    st.markdown(f'<div class="tip-box">💡 <b>Did you know?</b> {get_random_tip()}</div>', unsafe_allow_html=True)
     
     # Configure sidebar for the assistant settings
     with st.sidebar:
-        st.markdown('<h3 style="color: #E0E0FF;">Assistant Settings</h3>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-header">Assistant Settings</div>', unsafe_allow_html=True)
         
         # API key input (can be stored in environment variables or secrets in production)
         api_key = st.text_input("Anthropic API Key", type="password", 
@@ -190,13 +215,13 @@ When explaining mathematical concepts, be thorough but clear.""",
             st.session_state.messages = []
             st.rerun()
     
-    # Main content area with container
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
-    
-    # Display chat messages from history
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Main chat container
+    main_container = st.container()
+    with main_container:
+        # Display chat messages from history
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
     
     # Function to generate response from Claude
     def get_claude_response(prompt, history, system_message, model, use_web_search):
@@ -289,8 +314,8 @@ When explaining mathematical concepts, be thorough but clear.""",
     
     # If no messages yet, show example questions
     if len(st.session_state.messages) == 0:
-        st.markdown('<div style="color: #A0A0D0; padding: 20px; text-align: center;">', unsafe_allow_html=True)
-        st.markdown("### Sample Questions to Ask:")
+        st.markdown('<div class="sample-container">', unsafe_allow_html=True)
+        st.markdown('<div class="sample-header">Sample Questions to Ask:</div>', unsafe_allow_html=True)
         
         example_questions = [
             "How does a Reed-Frost model work?",
@@ -301,13 +326,12 @@ When explaining mathematical concepts, be thorough but clear.""",
         ]
         
         for q in example_questions:
-            st.markdown(f"- {q}")
+            st.markdown(f'<div class="sample-question">{q}</div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Add a footer
+    # Add a subtle footer
     st.markdown('<p class="footer-text">This assistant can help explain concepts related to the population biology models in this application.</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Only set page config when run directly, not when imported
