@@ -106,7 +106,6 @@ def local_css():
     }
     </style>
     """, unsafe_allow_html=True)
-
 def get_claude_response(messages):
     """Get a response from Claude API using the API key from secrets.toml"""
     try:
@@ -130,19 +129,27 @@ You help students and researchers understand concepts related to:
 Provide educational, accurate responses with relevant equations, explanations, and references. 
 When explaining mathematical concepts, be thorough but clear."""
         
-        # Prepare messages for API call with system prompt
-        api_messages = [{"role": "system", "content": system_prompt}]
+        # Prepare messages for API call with correct format
+        api_messages = []
         
         # Add the conversation history (up to last 10 messages to stay within context limits)
         for msg in messages[-10:]:
-            api_messages.append(msg)
+            if msg["role"] != "system":  # Skip any system messages in history
+                # Format each message with content as an array of objects
+                api_messages.append({
+                    "role": msg["role"],
+                    "content": [{"type": "text", "text": msg["content"]}]
+                })
         
-        # Make the API call
+        # Make the API call with system as a top-level parameter
         response = client.messages.create(
-            model="claude-3-sonnet-20240229",  # Using a model that should be available
+            model="claude-3-sonnet-20240229",
             max_tokens=2000,
+            system=system_prompt,  # System prompt as top-level parameter
             messages=api_messages
         )
+        
+        # The response format has changed too, extract text content
         return response.content[0].text
     except KeyError:
         return "Error: API key not found in secrets.toml. Please check your .streamlit/secrets.toml file."
