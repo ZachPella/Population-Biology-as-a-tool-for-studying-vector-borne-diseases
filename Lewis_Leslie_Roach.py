@@ -47,88 +47,60 @@ def run():
     # Create sidebar with parameters
     st.sidebar.header("Model Parameters")
     
-    # Survival rates
-    st.sidebar.subheader("Survival Rates (p)")
-    st.sidebar.markdown("""
-    *In population models, daily survivorship (p) is a key parameter influencing 
-    population growth and structure. Small changes in survival rates can have significant
-    effects on long-term population outcomes.*
-    """)
-    
+    # Survival Rates in sidebar
+    st.sidebar.subheader("Survival Rates")
     egg_survival = st.sidebar.slider("Egg daily survival rate", 0.0, 1.0, 0.9, 0.01, 
-                                    help="Survival rates for eggs typically range from 0.85-0.95 in protected oothecae")
+                                    help="Daily probability an egg survives")
     nymphal_survival = st.sidebar.slider("Nymphal daily survival rate", 0.0, 1.0, 0.9, 0.01,
-                                       help="Nymphs typically have mobility but are vulnerable to predation and control measures")
+                                       help="Daily probability a nymph survives")
     adult_survival = st.sidebar.slider("Adult daily survival rate", 0.0, 1.0, 0.9, 0.01, 
-                                      help="Adult cockroaches tend to have high survival rates in favorable environments")
+                                      help="Daily probability an adult survives")
     
-    # Initial population
+    # Population Parameters in sidebar
     st.sidebar.subheader("Population Parameters")
-    initial_population = st.sidebar.number_input("Initial population (adults at day 8)", 1, 10000, 1, 
+    initial_population = st.sidebar.number_input("Initial population (adults)", 1, 10000, 100, 
                                                help="Starting population of adult cockroaches")
-    
-    # Fecundity values
-    st.sidebar.subheader("Fecundity Values (f)")
-    st.sidebar.markdown("""
-    *Cockroaches produce oothecae (egg cases) at specific intervals during adulthood.
-    Each ootheca contains multiple eggs, with reproduction occurring in distinct pulses.*
-    """)
-    
-    fecundity_1 = st.sidebar.number_input("Fecundity at first oviposit (day 12)", 0, 500, 50, 
-                                         help="Number of eggs produced at first reproduction")
-    fecundity_2 = st.sidebar.number_input("Fecundity at second oviposit (day 17)", 0, 500, 50, 
-                                         help="Number of eggs produced at second reproduction")
-    fecundity_3 = st.sidebar.number_input("Fecundity at third oviposit (day 22)", 0, 500, 50, 
-                                         help="Number of eggs produced at third reproduction")
-    fecundity_4 = st.sidebar.number_input("Fecundity at fourth oviposit (day 27)", 0, 500, 50, 
-                                         help="Number of eggs produced at fourth reproduction")
-    
-    # Time periods to simulate
-    num_days = st.sidebar.slider("Number of days to simulate", 28, 200, 60, 
+    num_days = st.sidebar.slider("Simulation length (days)", 30, 365, 100, 
                                help="Length of simulation in days")
     
-    # Developmental stages for cockroaches
+    # Life Stage Durations in sidebar
     st.sidebar.subheader("Life Stage Durations")
-    st.sidebar.markdown("""
-    *Cockroaches have specific developmental periods for each life stage,
-    with transitions between stages that are crucial for understanding population dynamics.*
-    """)
-    
     egg_stage_duration = st.sidebar.slider("Egg stage duration (days)", 1, 30, 7, 
                                          help="Duration of egg development inside ootheca")
     nymphal_stage_duration = st.sidebar.slider("Nymphal stage duration (days)", 1, 90, 11, 
                                              help="Duration of nymphal stage before reaching adulthood")
     
-    # Create a helper function to detect development stages
-    def get_stage(day):
-        if day < egg_stage_duration:
-            return "Egg"
-        elif day < egg_stage_duration + nymphal_stage_duration:
-            return "Nymph"
-        else:
-            return "Adult"
+    # Fecundity Values in sidebar
+    st.sidebar.subheader("Fecundity Values")
+    fecundity_1 = st.sidebar.number_input("Fecundity at first oviposit (day 12)", 0, 500, 50, 
+                                         help="Eggs produced at first reproduction")
+    fecundity_2 = st.sidebar.number_input("Fecundity at second oviposit (day 17)", 0, 500, 50, 
+                                         help="Eggs produced at second reproduction")
+    fecundity_3 = st.sidebar.number_input("Fecundity at third oviposit (day 22)", 0, 500, 50, 
+                                         help="Eggs produced at third reproduction")
+    fecundity_4 = st.sidebar.number_input("Fecundity at fourth oviposit (day 27)", 0, 500, 50, 
+                                         help="Eggs produced at fourth reproduction")
     
+    # Advanced features in sidebar
+    st.sidebar.subheader("Advanced Model Features")
+    enable_density_dependence = st.sidebar.checkbox("Enable Density Dependence", False, 
+                                          help="Implement logistic growth")
+    if enable_density_dependence:
+        carrying_capacity = st.sidebar.number_input("Carrying Capacity (K)", 100, 1000000, 50000, 
+                                         help="Maximum sustainable population size")
+    else:
+        carrying_capacity = 50000
+    
+    # Model code
     def run_leslie_model(egg_survival, nymphal_survival, adult_survival, 
                         initial_pop, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
-                        num_days, egg_stage_duration, nymphal_stage_duration):
+                        num_days, egg_stage_duration, nymphal_stage_duration,
+                        enable_density_dependence=False, carrying_capacity=50000):
         """
         Run the Leslie Matrix population model simulation for cockroaches
-        
-        Parameters:
-        - egg_survival: Daily survival rate for eggs
-        - nymphal_survival: Daily survival rate for nymphs
-        - adult_survival: Daily survival rate for adults
-        - initial_pop: Initial adult population
-        - fecundity_1-4: Number of eggs laid at each oviposition event
-        - num_days: Number of days to simulate
-        - egg_stage_duration: Number of days in egg stage
-        - nymphal_stage_duration: Number of days in nymphal stage
-        
-        Returns:
-        - Population matrix and summary data
         """
         adult_stage_start = egg_stage_duration + nymphal_stage_duration
-        total_stages = max(28, adult_stage_start + 20)  # Ensure we have enough stages for development
+        total_stages = max(30, adult_stage_start + 20)  # Ensure we have enough stages
         
         # Create the Leslie Matrix
         leslie_matrix = np.zeros((total_stages, total_stages))
@@ -143,19 +115,12 @@ def run():
                 leslie_matrix[i+1, i] = adult_survival
         
         # Set fecundity values (first row)
-        # Reproduction occurs on specific adult days (counted from adult emergence)
-        reproduction_days = [
-            12,  # First oviposition
-            17,  # Second oviposition
-            22,  # Third oviposition
-            27   # Fourth oviposition
-        ]
+        reproduction_days = [12, 17, 22, 27]  # Oviposition days
         
         # Ensure indices are valid
         for i, day in enumerate(reproduction_days):
-            if adult_stage_start + (day - adult_stage_start) < total_stages:
-                if day >= adult_stage_start:
-                    leslie_matrix[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
+            if day < total_stages:
+                leslie_matrix[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
         
         # Initialize population vector
         population = np.zeros(total_stages)
@@ -166,9 +131,21 @@ def run():
         results[0, :] = population
         
         # Run the simulation
-        for t in range(1, num_days):
-            population = leslie_matrix @ population
-            results[t, :] = population
+        for day in range(1, num_days):
+            # Apply Leslie matrix to get next day's population
+            new_population = leslie_matrix @ population
+            
+            # Apply density dependence if enabled
+            if enable_density_dependence:
+                total_population = np.sum(population)
+                if total_population > 0:
+                    # Apply logistic scaling factor
+                    scaling_factor = 1 + ((carrying_capacity - total_population) / carrying_capacity)
+                    scaling_factor = max(0.1, min(scaling_factor, 1.5))  # Limit scaling to prevent extremes
+                    new_population = new_population * scaling_factor
+            
+            population = new_population
+            results[day, :] = population
         
         return results, total_stages, egg_stage_duration, nymphal_stage_duration
     
@@ -176,7 +153,8 @@ def run():
     results, total_stages, egg_stage_duration, nymphal_stage_duration = run_leslie_model(
         egg_survival, nymphal_survival, adult_survival, 
         initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
-        num_days, egg_stage_duration, nymphal_stage_duration
+        num_days, egg_stage_duration, nymphal_stage_duration,
+        enable_density_dependence, carrying_capacity
     )
     
     # Process results for visualization
@@ -191,7 +169,7 @@ def run():
     adults = np.sum(results[:, adult_indices], axis=1)
     total_population = eggs + nymphs + adults
     
-    # Calculate stage percentages
+    # Calculate stage percentages for stable age distribution analysis
     percent_eggs = np.zeros(num_days)
     percent_nymphs = np.zeros(num_days)
     percent_adults = np.zeros(num_days)
@@ -202,49 +180,25 @@ def run():
             percent_nymphs[i] = (nymphs[i] / total_population[i]) * 100
             percent_adults[i] = (adults[i] / total_population[i]) * 100
     
-    # Create a DataFrame for the summary data
-    summary_df = pd.DataFrame({
-        'Day': days,
-        'Eggs': eggs,
-        'Nymphs': nymphs,
-        'Adults': adults,
-        'Total': total_population,
-        '%Eggs': percent_eggs,
-        '%Nymphs': percent_nymphs,
-        '%Adults': percent_adults
-    })
+    # Calculate key metrics
+    peak_nymphs = np.max(nymphs)
+    peak_adults = np.max(adults)
+    peak_time = np.argmax(adults)
+    growth_rate = 100 * (np.exp(np.log(total_population[-1]/initial_population)/num_days) - 1) if total_population[-1] > 0 and initial_population > 0 else 0
     
-    # Display the overall statistics
-    st.header("Population Summary")
-    
-    # Add interpretation about pest population dynamics
-    intrinsic_growth_rate = np.log(total_population[-1] / initial_population) / num_days if total_population[-1] > 0 else 0
-    
-    st.info(f"""
-    **Population Growth Analysis:**
-    
-    The estimated intrinsic growth rate (r) of this cockroach population is {intrinsic_growth_rate:.4f}, 
-    representing the per capita rate of increase as described in the exponential growth model equation (14) in Black & Moore.
-    
-    For pest species like cockroaches, population models help identify critical life stages and 
-    thresholds for effective control measures. The growth potential shown here demonstrates the 
-    importance of early intervention in pest management.
-    """)
-    
+    # Summary Statistics
+    st.header("Summary Statistics")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Final Number - Eggs", f"{eggs[-1]:.0f}")
-        
+        st.metric("Peak Adult Population", f"{int(peak_adults):,}")
     with col2:
-        st.metric("Final Number - Nymphs", f"{nymphs[-1]:.0f}")
-        
+        st.metric("Time to Peak", f"{peak_time} days")
     with col3:
-        st.metric("Final Number - Adults", f"{adults[-1]:.0f}")
-        
+        st.metric("Final Adult Population", f"{int(adults[-1]):,}")
     with col4:
-        st.metric("Total Final Population", f"{total_population[-1]:.0f}")
-    
+        st.metric("Growth Rate", f"{growth_rate:.2f}%")
+
     # Helper function to convert figure to downloadable data
     def fig_to_bytes(fig):
         """Convert a matplotlib figure to bytes for downloading"""
@@ -254,7 +208,12 @@ def run():
         return buf
     
     # Create tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["Population Trends", "Stage Distribution", "Age Structure", "Data Table"])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Population Trends", 
+        "Stage Distribution", 
+        "Age Structure", 
+        "Leslie Matrix"
+    ])
     
     with tab1:
         st.header("Population Growth Over Time")
@@ -286,6 +245,25 @@ def run():
             file_name="cockroach_population_trends.png",
             mime="image/png"
         )
+    
+        # Population dynamics interpretation
+        st.subheader("Population Dynamics Interpretation")
+    
+        st.markdown("""
+        **Cockroach Population Growth Dynamics:**
+        
+        This visualization reveals characteristic growth patterns in cockroach populations:
+        
+        1. **Pulse Reproduction Pattern**: Cockroaches show distinct pulses of reproduction as females produce 
+           oothecae at regular intervals, creating the step-like increases in egg numbers. This pattern is 
+           similar to gonotrophic cycles described in vector species.
+        
+        2. **Stage Duration Effects**: The relative lengths of egg and nymphal stages create a time-delayed pattern of 
+           population growth, with waves of individuals moving through developmental stages.
+        
+        3. **Control Implications**: For pest management, this growth curve suggests that interventions targeting 
+           adults before they reproduce will be most effective at preventing population explosions.
+        """)
         
         # Population growth rate plot
         fig2, ax2 = plt.subplots(figsize=(10, 4))
@@ -300,56 +278,25 @@ def run():
         ax2.set_title('Daily Population Growth Rate', fontsize=14)
         ax2.grid(True, alpha=0.3)
         
+        mean_growth = np.mean(growth_rates[1:])
         st.pyplot(fig2)
         
-        st.download_button(
-            label="Download Growth Rate Plot",
-            data=fig_to_bytes(fig2),
-            file_name="cockroach_growth_rate.png",
-            mime="image/png"
-        )
-        
-        # UNIQUE INTERPRETATION FOR POPULATION TRENDS TAB - BASED ON BLACK & MOORE CHAPTER
-        st.markdown("""
-        **Cockroach Population Growth Dynamics:**
-        
-        This visualization reveals characteristic growth patterns in cockroach populations as discussed by Black & Moore:
-        
-        1. **Pulse Reproduction Pattern**: Similar to the pattern shown in Figure 24.7A, cockroaches show distinct pulses of 
-           reproduction as females produce oothecae at regular intervals, creating the step-like increases in 
-           egg numbers. This pattern resembles the gonotrophic cycles described for some vector species.
-        
-        2. **Stage Duration Effects**: The relative lengths of egg and nymphal stages create a time-delayed 
-           pattern of population growth, with waves of individuals moving through developmental stages. The 
-           longer the nymphal stage, the greater the delay between reproduction and the emergence of new 
-           reproductive adults.
-        
-        3. **Control Implications**: The exponential or logistic pattern displayed in this model (similar to Fig. 24.4 and 24.5)
-           suggests that interventions targeting adults before they reproduce would be most effective at preventing 
-           population explosions. The growth curve demonstrates why early detection and intervention are crucial.
-        """)
-        
-        # UNIQUE INTERPRETATION FOR GROWTH RATE - BASED ON BLACK & MOORE CHAPTER
-        mean_growth = np.mean(growth_rates[1:])
         st.markdown(f"""
         **Growth Rate Pattern Analysis:**
         
-        The growth rate plot reveals how cockroach populations expand over time, with a mean daily growth rate 
-        of {mean_growth:.2f}%. This relates to the equation Nt+1 = Nt + rNt discussed by Black & Moore.
+        The growth rate plot reveals how cockroach populations expand over time. The mean daily growth rate 
+        of {mean_growth:.2f}% translates to significant population increases over short periods.
         
         Key observations:
         
         1. **Cyclical Growth Patterns**: The spikes in growth rate correspond to the maturation of large 
-           cohorts of nymphs into reproductive adults, followed by the production of new egg cases. In natural
-           settings, these cycles might create predictable windows for control interventions.
+           cohorts of nymphs into reproductive adults, followed by the production of new egg cases.
         
-        2. **Initial Establishment Phase**: Population growth shows an initial phase followed by acceleration,
-           similar to patterns described in the text. The pattern relates to equation (14) in the chapter where 
-           b₀ > d₀ results in positive population growth.
+        2. **Initial Establishment Phase**: Population growth shows an initial phase followed by acceleration 
+           as multiple reproducing females become established.
         
-        3. **Carrying Capacity Effects**: In natural settings, growth rates would eventually decline as 
-           populations approach carrying capacity (as shown in Fig. 24.5) due to resource limitations and 
-           density-dependent factors. In human habitations, this ceiling may be much higher than in natural environments.
+        3. **Carrying Capacity Effects**: When density dependence is enabled, growth rates would eventually decline 
+           as populations approach carrying capacity due to resource limitations.
         """)
     
     with tab2:
@@ -383,7 +330,7 @@ def run():
         ).properties(
             width=700,
             height=400,
-            title='Relative Proportion of Life Stages Over Time'
+            title='Relative Proportion of Life Stages Over Time (Stable Age Distribution)'
         )
         
         st.altair_chart(chart, use_container_width=True)
@@ -412,6 +359,26 @@ def run():
             ax3.set_title(f'Population Composition on Day {num_days}', fontsize=14)
             st.pyplot(fig3)
             
+            # Stage distribution interpretation
+            st.subheader("Stage Distribution Interpretation")
+            st.markdown("""
+            **Cockroach Stage Distribution Dynamics:**
+            
+            This visualization shows how the cockroach population structure evolves over time, eventually reaching 
+            a stable age distribution (SAD). This structural pattern has important implications:
+            
+            1. **Hidden Infestation Indicators**: The high proportion of eggs and nymphs explains why cockroach 
+               infestations are often much larger than apparent from visible adults. This "population iceberg" 
+               effect is critical for pest management planning.
+            
+            2. **Resilience Mechanism**: The extended development time of nymphs creates a buffer against control 
+               measures - even if all adults are eliminated, the nymphal reservoir ensures population recovery.
+            
+            3. **Control Strategy Implications**: The eventual stable proportion of each life stage determines what 
+               fraction of the population can be targeted by stage-specific control methods (e.g., growth regulators 
+               vs. adult baits).
+            """)
+            
             st.download_button(
                 label="Download Population Composition Plot",
                 data=fig_to_bytes(fig3),
@@ -420,69 +387,20 @@ def run():
             )
         else:
             st.warning("No individuals found in the final day to create pie chart.")
-        
-        # UNIQUE INTERPRETATION FOR STAGE DISTRIBUTION - BASED ON BLACK & MOORE CHAPTER
-        st.markdown("""
-        **Cockroach Stage Distribution Dynamics:**
-        
-        This visualization shows how the cockroach population structure evolves over time, eventually reaching 
-        a stable age distribution (SAD) as described in Figure 24.11 of Black & Moore. In cockroach populations, 
-        this structural pattern has important implications:
-        
-        1. **Hidden Infestation Indicators**: The high proportion of eggs and nymphs (often >70% of the total 
-           population) explains why cockroach infestations are often much larger than apparent from visible adults. 
-           This "population iceberg" effect is critical for pest management planning.
-        
-        2. **Resilience Mechanism**: The extended development time of nymphs creates a buffer against control 
-           measures - even if all adults are eliminated, the nymphal reservoir ensures population recovery. 
-           This resilience mechanism is similar to the demographic dynamics described in the text.
-        
-        3. **Control Strategy Implications**: The eventual stable proportion of each life stage determines what 
-           fraction of the population can be targeted by stage-specific control methods (e.g., growth regulators 
-           vs. adult baits). Effective management requires addressing all life stages present in the stable 
-           distribution.
-        """)
-        
-        if non_zero_indices:
-            # UNIQUE INTERPRETATION FOR FINAL PROPORTIONS - BASED ON BLACK & MOORE CHAPTER
-            st.markdown(f"""
-            **Final Population Structure Analysis:**
-            
-            The pie chart shows the stable age distribution reached after {num_days} days. According to the concepts in
-            Black & Moore, this equilibrium structure is determined by:
-            
-            1. **Stage-specific survival rates**: Eggs ({egg_survival:.2f}), Nymphs ({nymphal_survival:.2f}), Adults ({adult_survival:.2f})
-            2. **Stage durations**: Egg development ({egg_stage_duration} days), Nymphal development ({nymphal_stage_duration} days)
-            3. **Reproductive pattern**: Similar to Fig 24.7A, with oviposition occurring at days 12, 17, 22, and 27 of adult life
-            
-            Cockroach populations typically show a much higher proportion of nymphs than adults due to their 
-            extended developmental period. This creates challenges for control programs, as the majority of the 
-            population is in life stages that may be less susceptible to certain control measures and often 
-            hide in inaccessible locations.
-            
-            As noted in the text, this stable structure helps explain why cockroach control often requires sustained effort 
-            rather than one-time treatments - the age distribution ensures a constant supply of developing 
-            individuals to replace eliminated adults.
-            """)
     
     with tab3:
         st.header("Age Structure Analysis")
         
-        # Fixed list of days to show
-        # Calculate some reasonable days to show (beginning, 1/3, 2/3, end)
-        day_options = [1, max(1, int(num_days/3)), max(1, int(2*num_days/3)), num_days]
-        
         # Let user select which day to focus on using radio buttons
+        day_options = [1, max(1, int(num_days/3)), max(1, int(2*num_days/3)), num_days]
         selected_day = st.radio(
             "Select a day to view age structure:",
             day_options,
-            format_func=lambda x: f"Day {x}"
+            format_func=lambda x: f"Day {x}",
+            horizontal=True
         )
         
         # Create age structure plot for the selected day
-        fig4, ax4 = plt.subplots(figsize=(10, 8))
-        
-        # Get age distribution for the selected day
         day_idx = selected_day - 1  # Convert to 0-based index
         age_distribution = results[day_idx, :]
         
@@ -506,14 +424,13 @@ def run():
             else:
                 bar_colors.append('#5d5d5d')  # Adult color
         
-        adult_stage_start = egg_stage_duration + nymphal_stage_duration
-        
         # Highlight reproduction days
         for age in range(total_stages):
             if age in [12, 17, 22, 27]:  # Reproduction days
                 bar_colors[age] = '#e74c3c'  # Highlight reproduction days
         
         # Plot horizontal bar chart
+        fig4, ax4 = plt.subplots(figsize=(10, 8))
         ax4.barh(range(total_stages), age_distribution, color=bar_colors)
         
         # Set y-ticks (limit to avoid overcrowding)
@@ -528,14 +445,14 @@ def run():
             ax4.set_yticklabels(age_labels)
         
         ax4.set_xlabel('Number of Individuals')
-        ax4.set_title(f'Age Structure on Day {selected_day}')
+        ax4.set_title(f'Age Structure on Day {selected_day}', fontsize=14)
         
         # Add stage dividers
         ax4.axhline(y=egg_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
         ax4.axhline(y=egg_stage_duration + nymphal_stage_duration - 0.5, color='k', linestyle='--', alpha=0.3)
         
         st.pyplot(fig4)
-    
+        
         st.download_button(
             label="Download Age Structure Plot",
             data=fig_to_bytes(fig4),
@@ -543,34 +460,29 @@ def run():
             mime="image/png"
         )
         
-        # UNIQUE INTERPRETATION FOR AGE STRUCTURE - BASED ON BLACK & MOORE CHAPTER
+        # Age structure interpretation
+        st.subheader("Age Structure Interpretation")
+        
         st.markdown("""
         **Cockroach Population Age Structure:**
         
-        This visualization displays the detailed age distribution of the cockroach population, similar to the Leslie-Lewis
-        matrix approach shown in Figure 24.8 of Black & Moore. The horizontal bars represent specific 
-        day-age classes, providing insights into cockroach population dynamics:
+        This visualization displays the detailed age distribution of the cockroach population, revealing patterns 
+        that are not apparent in the aggregated life stage counts:
         
-        1. **Reproductive Timing**: The red bars indicate ages when females produce oothecae (egg cases). Similar to 
-           the pattern shown in Figure 24.7A, cockroaches show distinct reproductive pulses, creating cohorts 
-           that move through the population together.
+        1. **Reproductive Timing**: The red bars indicate ages when females produce oothecae (egg cases). 
+           Cockroaches show distinct reproductive pulses, creating cohorts that move through the population together.
         
-        2. **Development Bottlenecks**: Transitions between life stages (marked by dotted lines) can represent 
-           vulnerable periods in the cockroach life cycle. As noted in the text, control strategies can be
-           optimized by targeting specific life stages based on their survival rates.
+        2. **Development Bottlenecks**: Transitions between life stages (marked by dotted lines) represent 
+           vulnerable periods in the cockroach life cycle.
         
         3. **Cohort Identification**: The distinct "waves" of individuals at specific ages indicates separate 
-           cohorts moving through the population. As discussed by Black & Moore, understanding these age-structured
-           dynamics is crucial for effective pest management.
-        
-        The model uses daily age classes rather than simple life stages to accurately track individuals through time,
-        which as the authors note is essential for precise population models.
+           cohorts moving through the population.
         """)
         
-        # Create a cohort survival curve
+        # Cohort survival analysis
         st.subheader("Cohort Survival Analysis")
         
-        # Use simpler slider for cohort day selection
+        # Slider for cohort day selection
         cohort_day = st.slider("Select day to start tracking a cohort:", 1, max(1, num_days-10), 1)
         cohort_day_idx = cohort_day - 1
         
@@ -611,4 +523,291 @@ def run():
             
             ax5.set_xlabel('Day', fontsize=12)
             ax5.set_ylabel('Survival Rate (%)', fontsize=12)
-            ax5.set_
+            ax5.set_title(f'Cohort Survival from Day {cohort_day}', fontsize=14)
+            ax5.legend(fontsize=10)
+            ax5.grid(True, alpha=0.3)
+            
+            # Use log scale for y-axis to match survivorship curves
+            ax5.set_yscale('log')
+            
+            # Add stage transition lines
+            transition_days = [
+                cohort_day + egg_stage_duration - 1, 
+                cohort_day + egg_stage_duration + nymphal_stage_duration - 1
+            ]
+            for day in transition_days:
+                if day < cohort_day + len(cohort_df):
+                    ax5.axvline(x=day, color='k', linestyle='--', alpha=0.5)
+            
+            st.pyplot(fig5)
+            
+            st.download_button(
+                label="Download Cohort Survival Plot",
+                data=fig_to_bytes(fig5),
+                file_name="cockroach_cohort_survival.png",
+                mime="image/png"
+            )
+            
+            # Calculate estimated daily survival rate
+            if len(cohort_df) > 1:
+                # Use logarithmic regression to estimate daily survival
+                days = np.array(range(len(cohort_df)))
+                survival = np.array(cohort_df["Survival Rate"])
+                survival_positive = np.maximum(survival, 0.001)  # Avoid log(0)
+                
+                # Fit log model: log(p) = log(m)/d
+                log_survival = np.log(survival_positive/100)
+                try:
+                    # Simple linear regression on log values
+                    slope, _ = np.polyfit(days, log_survival, 1)
+                    estimated_daily_survival = np.exp(slope)
+                    
+                    # Daily survival analysis
+                    st.markdown(f"""
+                    **Daily Survival Rate Analysis:**
+                    
+                    The estimated average daily survival probability from this cohort analysis is **{estimated_daily_survival:.4f}**.
+                    
+                    Small changes in survival rates can have large impacts on population growth. In this model, we use:
+                    - Eggs: {egg_survival:.2f}
+                    - Nymphs: {nymphal_survival:.2f}
+                    - Adults: {adult_survival:.2f}
+                    
+                    These stage-specific survival rates directly influence the population's growth potential.
+                    """)
+                except:
+                    pass
+        else:
+            st.warning(f"No eggs were laid on day {cohort_day}. Please select a different day.")
+    
+    with tab4:
+        st.header("Leslie Matrix Analysis")
+        
+        # Leslie Matrix description
+        st.markdown("""
+        **Cockroach Population Matrix Model:**
+        
+        The Leslie Matrix is the mathematical engine of this population model. The Leslie-Lewis matrix 
+        approach (M × n₍ = n₍₊₁) tracks how a population changes over time by representing:
+        
+        1. **Age-Structured Survival**: The subdiagonal elements of the matrix represent transition 
+           probabilities between age classes with stage-specific survival rates.
+        
+        2. **Reproductive Timing**: The first row contains fecundity values at specific ages, showing when
+           reproduction occurs during the organism's lifespan.
+        
+        3. **Population Projection**: By multiplying the matrix by the current population vector, we can
+           predict the population structure in the next time period.
+        """)
+        
+        # Create Leslie matrix for visualization
+        leslie_matrix_vis = np.zeros((total_stages, total_stages))
+        
+        # Set survival probabilities
+        for i in range(total_stages-1):
+            if i < egg_stage_duration:
+                leslie_matrix_vis[i+1, i] = egg_survival
+            elif i < egg_stage_duration + nymphal_stage_duration:
+                leslie_matrix_vis[i+1, i] = nymphal_survival
+            else:
+                leslie_matrix_vis[i+1, i] = adult_survival
+        
+        # Set fecundity values (first row)
+        for i, day in enumerate([12, 17, 22, 27]):
+            if day < total_stages:
+                leslie_matrix_vis[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
+        
+        # Create a heatmap of the Leslie matrix
+        fig6, ax6 = plt.subplots(figsize=(10, 8))
+        im = ax6.imshow(leslie_matrix_vis, cmap='viridis')
+        plt.colorbar(im, ax=ax6, label='Transition Rate')
+        
+        # Add lines to separate life stages in the matrix
+        ax6.axhline(y=egg_stage_duration - 0.5, color='w', linestyle='-')
+        ax6.axhline(y=egg_stage_duration + nymphal_stage_duration - 0.5, color='w', linestyle='-')
+        ax6.axvline(x=egg_stage_duration - 0.5, color='w', linestyle='-')
+        ax6.axvline(x=egg_stage_duration + nymphal_stage_duration - 0.5, color='w', linestyle='-')
+        
+        # Create custom labels
+        x_labels = []
+        y_labels = []
+        for i in range(total_stages):
+            if i == 0:
+                x_labels.append('Egg 1')
+                y_labels.append('Egg 1')
+            elif i < egg_stage_duration:
+                x_labels.append(f'Egg {i+1}')
+                y_labels.append(f'Egg {i+1}')
+            elif i == egg_stage_duration:
+                x_labels.append('Nymph 1')
+                y_labels.append('Nymph 1')
+            elif i < egg_stage_duration + nymphal_stage_duration:
+                x_labels.append(f'Nymph {i-egg_stage_duration+1}')
+                y_labels.append(f'Nymph {i-egg_stage_duration+1}')
+            elif i == egg_stage_duration + nymphal_stage_duration:
+                x_labels.append('Adult 1')
+                y_labels.append('Adult 1')
+            else:
+                x_labels.append(f'Adult {i-(egg_stage_duration+nymphal_stage_duration)+1}')
+                y_labels.append(f'Adult {i-(egg_stage_duration+nymphal_stage_duration)+1}')
+        
+        # Set reduced ticks to avoid overcrowding
+        max_ticks = 20
+        stride = max(1, total_stages // max_ticks)
+        
+        ax6.set_xticks(range(0, total_stages, stride))
+        ax6.set_yticks(range(0, total_stages, stride))
+        ax6.set_xticklabels([x_labels[i] for i in range(0, total_stages, stride)], rotation=90)
+        ax6.set_yticklabels([y_labels[i] for i in range(0, total_stages, stride)])
+        
+        ax6.set_title('Leslie Matrix Visualization', fontsize=14)
+        ax6.set_xlabel('Current Age (From)', fontsize=12)
+        ax6.set_ylabel('Next Age (To)', fontsize=12)
+        
+        st.pyplot(fig6)
+        
+        st.download_button(
+            label="Download Leslie Matrix Plot",
+            data=fig_to_bytes(fig6),
+            file_name="cockroach_leslie_matrix.png",
+            mime="image/png"
+        )
+        
+        # Life table example
+        st.subheader("Life Table Analysis")
+        
+        st.markdown("""
+        **Cockroach Life Table:**
+        
+        A life table is a fundamental tool in population ecology that tracks survival and reproduction by age class.
+        For cockroaches, the life table shows how survival and reproductive rates vary across different life stages:
+        """)
+        
+        # Create a dataframe for the life table data
+        life_table_data = {
+            "Life stage": ["Egg", "Egg", "Egg", "Egg", "Egg", "Egg", "Egg", 
+                           "Nymph", "Nymph", "Nymph", "Nymph", "Nymph", "Nymph", "Nymph", "Nymph", "Nymph", "Nymph", "Nymph",
+                           "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult"],
+            "Chronological age (days)": list(range(29)),
+            "Probability of daily survival (p)": [egg_survival]*egg_stage_duration + [nymphal_survival]*nymphal_stage_duration + [adult_survival]*(29-egg_stage_duration-nymphal_stage_duration),
+            "Fecundity (f)": [0]*12 + [fecundity_1] + [0]*4 + [fecundity_2] + [0]*4 + [fecundity_3] + [0]*4 + [fecundity_4] + [0]
+        }
+        
+        life_table_df = pd.DataFrame(life_table_data)
+        
+        # Display the life table
+        st.dataframe(life_table_df)
+        
+        # Description
+        st.markdown("""
+        The life table shows:
+        
+        - **Egg survivorship** represents daily survival probability in the egg stage
+        - **Nymphal survivorship** represents daily survival in the nymphal stage
+        - **Adult survivorship** represents daily survival in the adult stage
+        - **Fecundity** occurs on specific days (12, 17, 22, and 27), representing egg production after reaching adulthood
+        
+        This structured approach allows the model to accurately track individuals as they move through the population and
+        predict changes over time.
+        """)
+        
+        # Control strategy analysis
+        st.header("Control Strategy Analysis")
+        
+        # Create data for three scenarios
+        control_days = np.arange(1, 101)
+        
+        # Scenario 1: Baseline (current parameters)
+        baseline_adults = adults[:min(100, len(adults))]
+        if len(baseline_adults) < 100:
+            baseline_adults = np.pad(baseline_adults, (0, 100-len(baseline_adults)), 'constant', constant_values=baseline_adults[-1] if len(baseline_adults) > 0 else 0)
+        
+        # Scenario 2: Nymphal control (50% reduction in nymphal survival)
+        nymphal_control_results, _, _, _ = run_leslie_model(
+            egg_survival, nymphal_survival * 0.5, adult_survival, 
+            initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
+            min(100, num_days), egg_stage_duration, nymphal_stage_duration
+        )
+        nymphal_control_adults = np.sum(nymphal_control_results[:, adult_indices], axis=1)
+        if len(nymphal_control_adults) < 100:
+            nymphal_control_adults = np.pad(nymphal_control_adults, (0, 100-len(nymphal_control_adults)), 'constant', constant_values=nymphal_control_adults[-1] if len(nymphal_control_adults) > 0 else 0)
+        
+        # Scenario 3: Adult control (50% reduction in adult survival)
+        adult_control_results, _, _, _ = run_leslie_model(
+            egg_survival, nymphal_survival, adult_survival * 0.5, 
+            initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
+            min(100, num_days), egg_stage_duration, nymphal_stage_duration
+        )
+        adult_control_adults = np.sum(adult_control_results[:, adult_indices], axis=1)
+        if len(adult_control_adults) < 100:
+            adult_control_adults = np.pad(adult_control_adults, (0, 100-len(adult_control_adults)), 'constant', constant_values=adult_control_adults[-1] if len(adult_control_adults) > 0 else 0)
+        
+        # Plot the comparison
+        fig7, ax7 = plt.subplots(figsize=(10, 6))
+        ax7.plot(control_days, baseline_adults, label='Baseline', color='#1e88e5', linewidth=2)
+        ax7.plot(control_days, nymphal_control_adults, label='50% Reduction in Nymphal Survival', color='#ff6e40', linewidth=2)
+        ax7.plot(control_days, adult_control_adults, label='50% Reduction in Adult Survival', color='#5d5d5d', linewidth=2)
+        
+        ax7.set_xlabel('Day', fontsize=12)
+        ax7.set_ylabel('Number of Adult Cockroaches', fontsize=12)
+        ax7.set_title('Effect of Control Strategies on Adult Population', fontsize=14)
+        ax7.legend(fontsize=10)
+        ax7.grid(True, alpha=0.3)
+        
+        # Use log scale if numbers get large
+        if max(baseline_adults) > 1000 or max(nymphal_control_adults) > 1000 or max(adult_control_adults) > 1000:
+            ax7.set_yscale('log')
+            st.info("Using logarithmic scale for y-axis due to large population numbers")
+        
+        st.pyplot(fig7)
+        
+        # Control strategies analysis
+        st.markdown("""
+        ### Control Strategy Comparison
+        
+        The plot above demonstrates how different control strategies affect cockroach population dynamics:
+        
+        **Adult vs. Nymphal Control Effectiveness:**
+        
+        When using pest management techniques to reduce cockroach populations:
+        - Different life stages respond differently to control measures
+        - Targeting specific life stages can have varying effects on long-term population dynamics
+        - The impact of control measures depends on the target life stage's survival rate and reproductive value
+        
+        **Model Applications for Pest Management:**
+        
+        This model demonstrates:
+        - How mathematical modeling can guide practical pest management strategies
+        - The importance of understanding age structure when developing control programs
+        - The value of targeting specific life stages for maximum impact
+        """)
+        
+        # Add concluding section
+        st.header("Connecting Population Dynamics to Pest Management")
+        
+        st.markdown("""
+        ### Practical Applications of Population Biology Models
+        
+        Population biology provides essential tools for understanding and managing cockroach populations:
+        
+        1. **Model Insights**:
+           - These models help identify critical life stages and intervention points
+           - Understanding age structure reveals why some control efforts may initially seem ineffective
+           - Population dynamics explain the resilience of cockroach infestations
+        
+        2. **Management Applications**:
+           - Target life stages with the highest impact on population growth
+           - Time interventions to coincide with vulnerable periods in the lifecycle
+           - Develop integrated strategies that address multiple life stages
+        
+        3. **Comparative Approaches**:
+           - The Leslie matrix approach allows comparison of different control strategies
+           - By identifying which parameters most strongly influence population growth, we can develop targeted interventions
+           - Understanding stable age distribution helps explain pest resilience
+        """)
+        
+        # Display acknowledgment
+        st.info("This simulation is based on the Leslie-Lewis Matrix model for age-structured population analysis. The parameters used reflect cockroach population biology as described in population ecology literature.")
+
+if __name__ == "__main__":
+    run()
