@@ -11,7 +11,7 @@ def run():
     st.markdown("#### 🧬 A discrete, age-structured population dynamics simulator")
     st.markdown("""
     This interactive application simulates mosquito population dynamics using a Leslie Matrix model based on 
-    population biology principles for studying vector and pest populations.
+    population biology principles for studying vector populations.
     Adjust the parameters using the sliders and see how they affect the population growth.
     
     **Definition**: The Leslie Matrix model is a discrete-time, age-structured population model that describes 
@@ -19,8 +19,7 @@ def run():
     mathematical tool in population ecology, representing stage transitions and fecundity in a matrix format.
     
     **Core Concept**: At the heart of the Leslie Matrix model is the projection of current population structure 
-    to future time steps through matrix multiplication. The matrix contains survival probabilities on the sub-diagonal 
-    and fecundity values in the first row.
+    to future time steps through matrix multiplication:
     
     **Leslie Matrix Equation**: 
     $n_{t+1} = M × n_{t}$
@@ -28,43 +27,16 @@ def run():
     Where:
     - $n_{t+1}$ is the population vector at the next time step
     - $M$ is the Leslie Matrix containing survival rates and fecundity values
-    - $n_{t+1}$ is the current population vector by age class
+    - $n_{t}$ is the current population vector by age class
     
     **The Model's Logic**:
     1. Each age class has a specific survival probability to the next age class
     2. Only certain adult age classes reproduce, with age-specific fecundity
     3. The population structure changes over time until reaching a stable age distribution
     4. The matrix eigenvalue determines whether the population grows, shrinks, or stabilizes
-
-     **Parameters:**
-    - **Egg survival rate**: Daily survival probability for eggs in the oothecae (egg cases)
-    - **Nymphal survival rate**: Daily survival probability for nymphs (immature cockroaches)
-    - **Adult survival rate**: Daily survival probability for adult cockroaches
-    - **Initial population**: Starting number of individuals
-    - **Fecundity values**: Number of eggs produced at different adult ages
     """)
     
     # Create sidebar with parameters
-    st.sidebar.header("Model Parameters")
-    
-    
-    Where:
-    - $m$ = vector density in relation to hosts
-    - $a$ = biting rate (humans bitten per mosquito per day)
-    - $p$ = daily survival rate (especially of adults)
-    - $n$ = extrinsic incubation period (days from ingestion to transmission)
-    
-    ### Adjustable Parameters:
-    - **Survival rates** for each life stage (eggs, larvae, adults)
-    - **Duration** of each life stage
-    - **Fecundity** after each blood meal
-    - **Initial population** size
-    - **Density dependence** and immigration (optional)
-    
-    This model demonstrates how small changes in daily survival rates and age structure can dramatically affect both population growth and disease transmission potential.
-    """)
-    
-    # Create sidebar with ALL parameters
     st.sidebar.header("Model Parameters")
     
     # Life Stage Durations in sidebar
@@ -77,7 +49,7 @@ def run():
     # Survival Rates in sidebar
     st.sidebar.subheader("Survival Rates")
     egg_survival = st.sidebar.slider("Egg daily survival rate", 0.0, 1.0, 0.5, 0.01, 
-                              help="Daily probability an egg survives (Table 24.2: typically 0.4-0.6)")
+                              help="Daily probability an egg survives (typically 0.4-0.6)")
     larval_survival = st.sidebar.slider("Larval daily survival rate", 0.0, 1.0, 0.6, 0.01,
                                  help="Daily probability a larva survives")
     adult_survival = st.sidebar.slider("Adult daily survival rate", 0.0, 1.0, 0.9, 0.01, 
@@ -104,38 +76,36 @@ def run():
     # Advanced features in sidebar
     st.sidebar.subheader("Advanced Model Features")
     enable_density_dependence = st.sidebar.checkbox("Enable Density Dependence", False, 
-                                            help="Implement logistic growth (Fig 24.5)")
+                                            help="Implement logistic growth")
     if enable_density_dependence:
         carrying_capacity = st.sidebar.number_input("Carrying Capacity (K)", 100, 1000000, 50000, 
                                            help="Maximum sustainable population size")
     else:
         carrying_capacity = 50000
         
-    enable_immigration = st.sidebar.checkbox("Enable Immigration & Mortality", False, 
-                                     help="Allow immigration/emigration (Fig 24.3)")
+    enable_immigration = st.sidebar.checkbox("Enable Immigration", False, 
+                                     help="Allow immigration of mosquitoes")
     if enable_immigration:
         immigration_rate = st.sidebar.slider("Immigration rate (adults per 2 days)", 0, 100, 10)
-        mortality_rate = st.sidebar.slider("Mortality rate (fraction leaving)", 0.0, 1.0, 0.1)
     else:
-        immigration_rate = 10
-        mortality_rate = 0.1
+        immigration_rate = 0
 
     # Model code
     def run_leslie_model(egg_survival, larval_survival, adult_survival, 
                         initial_pop, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
                         num_days, egg_stage_duration, larval_stage_duration,
                         enable_density_dependence=False, carrying_capacity=50000,
-                        enable_immigration=False, immigration_rate=10, mortality_rate=0.1):
+                        enable_immigration=False, immigration_rate=0):
         """
         Run the Leslie Matrix population model simulation for mosquitoes
         """
         adult_stage_start = egg_stage_duration + larval_stage_duration
-        total_stages = max(28, adult_stage_start + 20)  # Ensure we have enough stages
+        total_stages = max(30, adult_stage_start + 20)  # Ensure we have enough stages
         
-        # Create the Leslie Matrix (M matrix in Fig 24.8)
+        # Create the Leslie Matrix (M matrix)
         leslie_matrix = np.zeros((total_stages, total_stages))
         
-        # Set survival probabilities (subdiagonal) - P values in Table 24.2
+        # Set survival probabilities (subdiagonal)
         for i in range(total_stages-1):
             if i < egg_stage_duration:  # Egg stage
                 leslie_matrix[i+1, i] = egg_survival
@@ -144,17 +114,15 @@ def run():
             else:  # Adult stage
                 leslie_matrix[i+1, i] = adult_survival
         
-        # Set fecundity values (first row) - F values in Table 24.2
-        # Reproduction occurs on specific adult days (after blood meals)
-        reproduction_days = [12, 17, 22, 27]  # Blood meal days
+        # Set fecundity values (first row) - after blood meals on specific days
+        reproduction_days = [12, 17, 22, 27]  # Blood meal days from readings
         
         # Ensure indices are valid
         for i, day in enumerate(reproduction_days):
-            if adult_stage_start + (day - adult_stage_start) < total_stages:
-                if day >= adult_stage_start:
-                    leslie_matrix[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
+            if day < total_stages:
+                leslie_matrix[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
         
-        # Initialize population vector (n vector in Fig 24.8)
+        # Initialize population vector
         population = np.zeros(total_stages)
         population[adult_stage_start] = initial_pop  # Start with initial adults
         
@@ -162,40 +130,24 @@ def run():
         results = np.zeros((num_days, total_stages))
         results[0, :] = population
         
-        # Run the simulation - similar to iteration process described in Fig 24.9
+        # Run the simulation
         for day in range(1, num_days):
-            # Apply Leslie matrix to get next day's population without adjustments
+            # Apply Leslie matrix to get next day's population
             new_population = leslie_matrix @ population
             
-            # Apply density dependence if enabled (based on Fig 24.5 logistic growth)
+            # Apply density dependence if enabled
             if enable_density_dependence:
                 total_population = np.sum(population)
                 if total_population > 0:
-                    # Apply logistic scaling factor based on equation 15 in the text
+                    # Apply logistic scaling factor
                     scaling_factor = 1 + ((carrying_capacity - total_population) / carrying_capacity)
                     scaling_factor = max(0.1, min(scaling_factor, 1.5))  # Limit scaling to prevent extremes
                     new_population = new_population * scaling_factor
             
-            # Apply immigration and mortality if enabled (based on Fig 24.3)
+            # Apply immigration if enabled
             if enable_immigration and day % 2 == 0:  # Every 2 days
                 # Add new adults from immigration
                 new_population[adult_stage_start] += immigration_rate
-                
-                # Apply mortality to cases - removing a fraction of all individuals
-                adult_indices = range(egg_stage_duration + larval_stage_duration, total_stages)
-                adult_count = np.sum(new_population[adult_indices])
-                
-                # Calculate how many adults die
-                adults_dying = int(adult_count * mortality_rate / 10)  # Scale down to make effect visible
-                
-                # Remove adults, starting from oldest
-                if adults_dying > 0 and adult_count > 0:
-                    for i in range(total_stages-1, egg_stage_duration + larval_stage_duration-1, -1):
-                        if adults_dying <= 0:
-                            break
-                        dying_from_this_age = min(adults_dying, new_population[i])
-                        new_population[i] -= dying_from_this_age
-                        adults_dying -= dying_from_this_age
             
             population = new_population
             results[day, :] = population
@@ -208,7 +160,7 @@ def run():
         initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
         num_days, egg_stage_duration, larval_stage_duration,
         enable_density_dependence, carrying_capacity,
-        enable_immigration, immigration_rate, mortality_rate
+        enable_immigration, immigration_rate
     )
     
     # Process results for visualization
@@ -223,7 +175,7 @@ def run():
     adults = np.sum(results[:, adult_indices], axis=1)
     total_population = eggs + larvae + adults
     
-    # Calculate stage percentages for stable age distribution analysis (Fig 24.11)
+    # Calculate stage percentages for stable age distribution analysis
     percent_eggs = np.zeros(num_days)
     percent_larvae = np.zeros(num_days)
     percent_adults = np.zeros(num_days)
@@ -246,7 +198,7 @@ def run():
     peak_time = np.argmax(adults)
     growth_rate = 100 * (np.exp(np.log(total_population[-1]/initial_population)/num_days) - 1) if total_population[-1] > 0 and initial_population > 0 else 0
     
-    # Summary Statistics styled like Reed-Frost
+    # Summary Statistics
     st.header("Summary Statistics")
     col1, col2, col3, col4 = st.columns(4)
     
@@ -267,18 +219,18 @@ def run():
         buf.seek(0)
         return buf
     
-    # Create tabs for different views - match the cockroach model tab structure
+    # Create tabs for different views
     tab1, tab2, tab3, tab4 = st.tabs([
         "Population Trends", 
         "Stage Distribution", 
         "Age Structure", 
-        "Data Table"
+        "Leslie Matrix"
     ])
     
     with tab1:
         st.header("Population Growth Over Time")
         
-        # Population trend plot FIRST
+        # Population trend plot
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         ax1.plot(days, eggs, label='Eggs', color='#f7d060', linewidth=2)
         ax1.plot(days, larvae, label='Larvae', color='#ff6e40', linewidth=2)
@@ -306,7 +258,7 @@ def run():
             mime="image/png"
         )
     
-        # INTERPRETATION AFTER - match cockroach model style
+        # Population dynamics interpretation
         st.subheader("Population Dynamics Interpretation")
     
         st.markdown("""
@@ -316,15 +268,14 @@ def run():
         
         1. **Pulse Reproduction Pattern**: Mosquitoes show distinct pulses of reproduction as females take blood meals at 
            regular intervals, creating the step-like increases in egg numbers. This pattern corresponds directly to the 
-           gonotrophic cycles described in Black & Moore.
+           gonotrophic cycles described in the reading.
         
         2. **Stage Duration Effects**: The relative lengths of egg and larval stages create a time-delayed pattern of 
            population growth, with waves of individuals moving through developmental stages. This developmental timing 
            directly influences vectorial capacity.
         
         3. **Control Implications**: For vector management, this growth curve suggests that interventions targeting 
-           adults before they reproduce will be most effective at reducing disease transmission. The exponential nature 
-           of the growth curve demonstrates why early detection and intervention are crucial.
+           adults before they reproduce will be most effective at reducing disease transmission.
         """)
         
         # Population growth rate plot
@@ -340,7 +291,6 @@ def run():
         ax2.set_title('Daily Population Growth Rate', fontsize=14)
         ax2.grid(True, alpha=0.3)
         
-        # Growth rate interpretation - match cockroach model style
         mean_growth = np.mean(growth_rates[1:])
         st.pyplot(fig2)
         
@@ -353,15 +303,13 @@ def run():
         Key observations:
         
         1. **Cyclical Growth Patterns**: The spikes in growth rate correspond to the maturation of large 
-           cohorts of larvae into reproductive adults, followed by blood meals and egg-laying events. These 
-           cycles create predictable windows for control interventions.
+           cohorts of larvae into reproductive adults, followed by blood meals and egg-laying events.
         
         2. **Initial Establishment Phase**: Vector populations typically show a lag phase with lower 
-           growth rates followed by a rapid acceleration as multiple reproducing females become established. 
-           This pattern mirrors the logistic growth equation described in Black & Moore's chapter.
+           growth rates followed by a rapid acceleration as multiple reproducing females become established.
         
         3. **Carrying Capacity Effects**: When density dependence is enabled, growth rates would eventually decline 
-           as populations approach carrying capacity due to resource limitations and density-dependent factors.
+           as populations approach carrying capacity due to resource limitations.
         """)
     
     with tab2:
@@ -424,26 +372,24 @@ def run():
             ax3.set_title(f'Population Composition on Day {num_days}', fontsize=14)
             st.pyplot(fig3)
             
-            # INTERPRETATION - match cockroach model style
+            # Stage distribution interpretation
             st.subheader("Stage Distribution Interpretation")
             st.markdown("""
             **Mosquito Stage Distribution Dynamics:**
             
             This visualization shows how the mosquito population structure evolves over time, eventually reaching 
-            a stable age distribution (SAD) - a fundamental concept in population biology described in Black & Moore. 
+            a stable age distribution (SAD) - a fundamental concept in population biology described in the reading. 
             In mosquito populations, this structural pattern has important implications:
             
-            1. **Hidden Reservoir Effect**: The high proportion of eggs and larvae (often >70% of the total 
-               population) explains why mosquito populations can quickly rebound after control efforts targeting only adults.
-               This "population iceberg" effect is critical for vector management planning.
+            1. **Population Structure**: As shown in Figure 24.11 from the reading, mosquito populations typically 
+               stabilize with a higher proportion of larvae than adults, creating a characteristic distribution pattern.
             
-            2. **Resilience Mechanism**: The extended development time of larvae creates a buffer against control 
-               measures - even if all adults are eliminated, the larval reservoir ensures population recovery. 
-               This resilience mechanism is similar to the "demographic momentum" described in population models.
+            2. **Hidden Reservoir Effect**: The high proportion of eggs and larvae explains why mosquito populations 
+               can quickly rebound after control efforts targeting only adults. This "population iceberg" effect is 
+               critical for vector management planning.
             
-            3. **Vectorial Capacity Implications**: The stable age distribution directly affects disease transmission potential
-               by determining what proportion of the population survives to ages capable of transmitting pathogens.
-               As described in Macdonald's equation, only older females contribute to disease spread.
+            3. **Vectorial Capacity Implications**: The stable age distribution directly affects disease transmission 
+               potential by determining what proportion of the population survives to ages capable of transmitting pathogens.
             """)
             
             st.download_button(
@@ -491,11 +437,9 @@ def run():
             else:
                 bar_colors.append('#5d5d5d')  # Adult color
         
-        adult_stage_start = egg_stage_duration + larval_stage_duration
-        
         # Highlight reproduction days
         for age in range(total_stages):
-            if age in [12, 17, 22, 27]:  # Blood meal days
+            if age in [12, 17, 22, 27]:  # Blood meal days from reading
                 bar_colors[age] = '#e74c3c'  # Highlight reproduction days
         
         # Plot horizontal bar chart
@@ -529,7 +473,7 @@ def run():
             mime="image/png"
         )
         
-        # INTERPRETATION - match cockroach model style
+        # Age structure interpretation
         st.subheader("Age Structure Interpretation")
         
         st.markdown("""
@@ -539,25 +483,21 @@ def run():
         that are not apparent in the aggregated life stage counts:
         
         1. **Blood Meal Timing**: The red bars indicate ages when females take blood meals and produce eggs. 
-           Unlike species with continuous reproduction, mosquitoes show distinct reproductive pulses following 
-           each blood meal, creating cohorts that move through the population together.
+           As shown in Table 24.2 from the reading, mosquitoes produce eggs on specific days following blood 
+           meals (days 12, 17, 22, and 27), creating distinct reproductive pulses.
         
         2. **Development Bottlenecks**: Transitions between life stages (marked by dotted lines) represent 
-           vulnerable periods in the mosquito life cycle. For example, pupation and adult emergence may be 
-           more susceptible to environmental stressors, creating windows of opportunity for control.
+           vulnerable periods in the mosquito life cycle, as survival rates differ between stages.
         
         3. **Transmission Implications**: Only adult mosquitoes that survive beyond the extrinsic incubation 
-           period (typically 10-14 days post-emergence) can transmit disease. This age structure directly 
-           affects vectorial capacity as described in Black & Moore's model.
-        
-        4. **Cohort Identification**: The distinct "waves" of individuals at specific ages indicates separate 
-           cohorts moving through the population, reflecting the pulsed reproduction pattern following gonotrophic cycles.
+           period can transmit disease, which explains why adult survival rate has such a strong impact on 
+           vectorial capacity.
         """)
         
         # Cohort survival analysis
         st.subheader("Cohort Survival Analysis")
         
-        # Use simpler slider for cohort day selection
+        # Slider for cohort day selection
         cohort_day = st.slider("Select day to start tracking a cohort:", 1, max(1, num_days-10), 1)
         cohort_day_idx = cohort_day - 1
         
@@ -602,4 +542,289 @@ def run():
             ax5.legend(fontsize=10)
             ax5.grid(True, alpha=0.3)
             
-            #
+            # Use log scale for y-axis to match survivorship curves
+            ax5.set_yscale('log')
+            
+            # Add stage transition lines
+            transition_days = [
+                cohort_day + egg_stage_duration - 1, 
+                cohort_day + egg_stage_duration + larval_stage_duration - 1
+            ]
+            for day in transition_days:
+                if day < cohort_day + len(cohort_df):
+                    ax5.axvline(x=day, color='k', linestyle='--', alpha=0.5)
+            
+            st.pyplot(fig5)
+            
+            st.download_button(
+                label="Download Cohort Survival Plot",
+                data=fig_to_bytes(fig5),
+                file_name="mosquito_cohort_survival.png",
+                mime="image/png"
+            )
+            
+            # Calculate estimated daily survival rate
+            if len(cohort_df) > 1:
+                # Use logarithmic regression to estimate daily survival
+                days = np.array(range(len(cohort_df)))
+                survival = np.array(cohort_df["Survival Rate"])
+                survival_positive = np.maximum(survival, 0.001)  # Avoid log(0)
+                
+                # Fit log model: log(p) = log(m)/d
+                log_survival = np.log(survival_positive/100)
+                try:
+                    # Simple linear regression on log values
+                    slope, _ = np.polyfit(days, log_survival, 1)
+                    estimated_daily_survival = np.exp(slope)
+                    
+                    # Daily survival analysis
+                    st.markdown(f"""
+                    **Daily Survival Rate Analysis:**
+                    
+                    The estimated average daily survival probability from this cohort analysis is **{estimated_daily_survival:.4f}**.
+                    
+                    According to the reading, daily survival rates are critical components of vectorial capacity.
+                    Small changes in survival rates can have large impacts on population growth. The reading explains that
+                    survival rates can be measured using mark-release-recapture methods or physiological age grading
+                    techniques to track cohorts.
+                    
+                    For mosquito populations, the stage-specific survival rates you've chosen 
+                    (Eggs: {egg_survival:.2f}, Larvae: {larval_survival:.2f}, Adults: {adult_survival:.2f}) 
+                    directly influence the population's growth potential.
+                    """)
+                except:
+                    pass
+        else:
+            st.warning(f"No eggs were laid on day {cohort_day}. Please select a different day.")
+    
+    with tab4:
+        st.header("Leslie Matrix Analysis")
+        
+        # Leslie Matrix description
+        st.markdown("""
+        **Mosquito Population Matrix Model:**
+        
+        The Leslie Matrix is the mathematical engine of this population model. As described in the reading,
+        the Leslie-Lewis matrix approach (M × n₍ = n₍₊₁) tracks how a population changes over time by representing:
+        
+        1. **Age-Structured Survival**: The subdiagonal elements of the matrix represent transition 
+           probabilities between age classes with stage-specific survival rates.
+        
+        2. **Reproductive Timing**: The first row contains fecundity values at specific ages, showing when
+           reproduction occurs during the organism's lifespan.
+        
+        3. **Population Projection**: By multiplying the matrix by the current population vector, we can
+           predict the population structure in the next time period.
+        """)
+        
+        # Create Leslie matrix for visualization
+        leslie_matrix_vis = np.zeros((total_stages, total_stages))
+        
+        # Set survival probabilities
+        for i in range(total_stages-1):
+            if i < egg_stage_duration:
+                leslie_matrix_vis[i+1, i] = larval_survival
+            else:  # Adult stage
+                leslie_matrix_vis[i+1, i] = adult_survival
+        
+        # Set fecundity values (first row)
+        for i, day in enumerate([12, 17, 22, 27]):
+            if day < total_stages:
+                leslie_matrix_vis[0, day] = [fecundity_1, fecundity_2, fecundity_3, fecundity_4][i]
+        
+        # Create a heatmap of the Leslie matrix
+        fig6, ax6 = plt.subplots(figsize=(10, 8))
+        im = ax6.imshow(leslie_matrix_vis, cmap='viridis')
+        plt.colorbar(im, ax=ax6, label='Transition Rate')
+        
+        # Add lines to separate life stages in the matrix
+        ax6.axhline(y=egg_stage_duration - 0.5, color='w', linestyle='-')
+        ax6.axhline(y=egg_stage_duration + larval_stage_duration - 0.5, color='w', linestyle='-')
+        ax6.axvline(x=egg_stage_duration - 0.5, color='w', linestyle='-')
+        ax6.axvline(x=egg_stage_duration + larval_stage_duration - 0.5, color='w', linestyle='-')
+        
+        # Create custom labels
+        x_labels = []
+        y_labels = []
+        for i in range(total_stages):
+            if i == 0:
+                x_labels.append('Egg 1')
+                y_labels.append('Egg 1')
+            elif i < egg_stage_duration:
+                x_labels.append(f'Egg {i+1}')
+                y_labels.append(f'Egg {i+1}')
+            elif i == egg_stage_duration:
+                x_labels.append('Larva 1')
+                y_labels.append('Larva 1')
+            elif i < egg_stage_duration + larval_stage_duration:
+                x_labels.append(f'Larva {i-egg_stage_duration+1}')
+                y_labels.append(f'Larva {i-egg_stage_duration+1}')
+            elif i == egg_stage_duration + larval_stage_duration:
+                x_labels.append('Adult 1')
+                y_labels.append('Adult 1')
+            else:
+                x_labels.append(f'Adult {i-(egg_stage_duration+larval_stage_duration)+1}')
+                y_labels.append(f'Adult {i-(egg_stage_duration+larval_stage_duration)+1}')
+        
+        # Set reduced ticks to avoid overcrowding
+        max_ticks = 20
+        stride = max(1, total_stages // max_ticks)
+        
+        ax6.set_xticks(range(0, total_stages, stride))
+        ax6.set_yticks(range(0, total_stages, stride))
+        ax6.set_xticklabels([x_labels[i] for i in range(0, total_stages, stride)], rotation=90)
+        ax6.set_yticklabels([y_labels[i] for i in range(0, total_stages, stride)])
+        
+        ax6.set_title('Leslie Matrix Visualization', fontsize=14)
+        ax6.set_xlabel('Current Age (From)', fontsize=12)
+        ax6.set_ylabel('Next Age (To)', fontsize=12)
+        
+        st.pyplot(fig6)
+        
+        st.download_button(
+            label="Download Leslie Matrix Plot",
+            data=fig_to_bytes(fig6),
+            file_name="mosquito_leslie_matrix.png",
+            mime="image/png"
+        )
+        
+        # Table 24.2 reproduction from the reading
+        st.subheader("Life Table Analysis")
+        
+        st.markdown("""
+        **Life Table Example (Based on Table 24.2 from the reading):**
+        
+        The life table below shows the theoretical mosquito life table parameters that form the basis of this model:
+        """)
+        
+        # Create a dataframe for the life table data based on Table 24.2
+        life_table_data = {
+            "Life stage": ["Egg", "Larva", "Larva", "Larva", "Larva", "Larva", "Larva", "Pupa", 
+                           "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult",
+                           "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult",
+                           "Adult", "Adult", "Adult", "Adult", "Adult"],
+            "Chronological age (days)": list(range(29)),
+            "Probability of daily survival (p)": [0.5] + [0.6]*7 + [0.9]*20,
+            "Fecundity (f)": [0]*12 + [120] + [0]*4 + [100] + [0]*4 + [80] + [0]*4 + [60] + [0]
+        }
+        
+        life_table_df = pd.DataFrame(life_table_data)
+        
+        # Display the life table
+        st.dataframe(life_table_df)
+        
+        # Add description of Table 24.2
+        st.markdown("""
+        The life table shows:
+        
+        - **Egg survivorship** is 0.5 (50% daily survival)
+        - **Larval survivorship** is 0.6 (60% daily survival)
+        - **Adult survivorship** is 0.9 (90% daily survival)
+        - **Fecundity** occurs on days 12, 17, 22, and 27, with decreasing egg output each time
+        
+        This model follows the mosquito gonotrophic cycle where each female requires a blood meal for
+        each batch of eggs, with approximately 5 days between blood meals.
+        """)
+        
+        # Control strategy analysis
+        st.header("Vector Control Strategy Analysis")
+        
+        # Create data for three scenarios
+        control_days = np.arange(1, 101)
+        
+        # Scenario 1: Baseline (current parameters)
+        baseline_adults = adults[:min(100, len(adults))]
+        if len(baseline_adults) < 100:
+            baseline_adults = np.pad(baseline_adults, (0, 100-len(baseline_adults)), 'constant', constant_values=baseline_adults[-1] if len(baseline_adults) > 0 else 0)
+        
+        # Scenario 2: Larval control (50% reduction in larval survival)
+        larval_control_results, _, _, _ = run_leslie_model(
+            egg_survival, larval_survival * 0.5, adult_survival, 
+            initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
+            min(100, num_days), egg_stage_duration, larval_stage_duration
+        )
+        larval_control_adults = np.sum(larval_control_results[:, adult_indices], axis=1)
+        if len(larval_control_adults) < 100:
+            larval_control_adults = np.pad(larval_control_adults, (0, 100-len(larval_control_adults)), 'constant', constant_values=larval_control_adults[-1] if len(larval_control_adults) > 0 else 0)
+        
+        # Scenario 3: Adult control (50% reduction in adult survival)
+        adult_control_results, _, _, _ = run_leslie_model(
+            egg_survival, larval_survival, adult_survival * 0.5, 
+            initial_population, fecundity_1, fecundity_2, fecundity_3, fecundity_4, 
+            min(100, num_days), egg_stage_duration, larval_stage_duration
+        )
+        adult_control_adults = np.sum(adult_control_results[:, adult_indices], axis=1)
+        if len(adult_control_adults) < 100:
+            adult_control_adults = np.pad(adult_control_adults, (0, 100-len(adult_control_adults)), 'constant', constant_values=adult_control_adults[-1] if len(adult_control_adults) > 0 else 0)
+        
+        # Plot the comparison
+        fig7, ax7 = plt.subplots(figsize=(10, 6))
+        ax7.plot(control_days, baseline_adults, label='Baseline', color='#1e88e5', linewidth=2)
+        ax7.plot(control_days, larval_control_adults, label='50% Reduction in Larval Survival', color='#ff6e40', linewidth=2)
+        ax7.plot(control_days, adult_control_adults, label='50% Reduction in Adult Survival', color='#5d5d5d', linewidth=2)
+        
+        ax7.set_xlabel('Day', fontsize=12)
+        ax7.set_ylabel('Number of Adult Mosquitoes', fontsize=12)
+        ax7.set_title('Effect of Control Strategies on Adult Population', fontsize=14)
+        ax7.legend(fontsize=10)
+        ax7.grid(True, alpha=0.3)
+        
+        # Use log scale if numbers get large
+        if max(baseline_adults) > 1000 or max(larval_control_adults) > 1000 or max(adult_control_adults) > 1000:
+            ax7.set_yscale('log')
+            st.info("Using logarithmic scale for y-axis due to large population numbers")
+        
+        st.pyplot(fig7)
+        
+        # Control strategies analysis
+        st.markdown("""
+        ### Control Strategy Comparison
+        
+        The plot above demonstrates concepts from the reading regarding stage-specific control strategies:
+        
+        **Adult vs. Larval Control Effectiveness:**
+        
+        According to Figure 24.13 in the reading, when using interventions to reduce vector populations:
+        - Changes in survival rates have different impacts depending on the life stage targeted
+        - The reading shows that targeting larvae (immature stages) can be more efficient than targeting adults
+          in some circumstances
+        - However, the reading notes that in real populations, density-dependent factors may affect these outcomes
+        
+        **Model Applications for Control:**
+        
+        As noted in the reading:
+        - The Leslie matrix approach allows prediction of how control measures will affect future population structure
+        - Vectorial capacity is most strongly affected by adult survival rate, as evident in the exponent in the formula
+        - Economic thresholds can be calculated to determine the minimum control effort needed
+        """)
+        
+        # Add concluding section
+        st.header("Connecting Population Dynamics to Vector Management")
+        
+        st.markdown("""
+        ### Practical Applications of Population Biology Models
+        
+        As emphasized in the reading, population biology provides essential tools for understanding and managing vector populations:
+        
+        1. **Model Limitations**:
+           - These models are primarily educational tools
+           - Real-world populations are more complex with factors like density dependence
+           - Models should be used for comparative analysis rather than absolute predictions
+        
+        2. **Data Collection Methods**:
+           - The reading describes methods for measuring key parameters like survival rates and fecundity
+           - Techniques include mark-release-recapture, physiological age grading, and cohort analysis
+        
+        3. **Comparative Approaches**:
+           - The Leslie matrix approach demonstrates how mathematical models can guide practical vector control
+           - By identifying which parameters most strongly influence population growth, we can develop targeted interventions
+           - The stable age distribution concept helps explain why vector populations can be difficult to control
+        """)
+        
+        # Display acknowledgment
+        st.info("This simulation is based on the Leslie-Lewis Matrix model as described in the reading materials. The parameters used match those from Table 24.2 for a theoretical mosquito population.")
+
+if __name__ == "__main__":
+    run()[i+1, i] = egg_survival
+            elif i < egg_stage_duration + larval_stage_duration:
+                leslie_matrix_vis
