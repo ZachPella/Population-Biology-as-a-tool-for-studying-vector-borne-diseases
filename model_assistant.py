@@ -164,13 +164,6 @@ def run():
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
-    # Single header with DNA icon
-    st.markdown('<div class="custom-header">🧬 Population Biology Model Assistant</div>', unsafe_allow_html=True)
-    st.markdown('<p class="description-text">Ask questions about population biology models, epidemiology concepts, or get help with interpreting model results. This assistant has internet access to provide up-to-date information.</p>', unsafe_allow_html=True)
-    
-    # Add a tip box
-    st.markdown(f'<div class="tip-box">💡 <b>Did you know?</b> {get_random_tip()}</div>', unsafe_allow_html=True)
-    
     # Configure sidebar for the assistant settings
     with st.sidebar:
         st.markdown('<div class="sidebar-header">Assistant Settings</div>', unsafe_allow_html=True)
@@ -214,14 +207,6 @@ When explaining mathematical concepts, be thorough but clear.""",
         if st.button("Clear Chat History"):
             st.session_state.messages = []
             st.rerun()
-    
-    # Main chat container
-    main_container = st.container()
-    with main_container:
-        # Display chat messages from history
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
     
     # Function to generate response from Claude
     def get_claude_response(prompt, history, system_message, model, use_web_search):
@@ -277,6 +262,26 @@ When explaining mathematical concepts, be thorough but clear.""",
         except Exception as e:
             return f"Error generating response: {str(e)}"
     
+    # Display chat interface with only ONE header
+    # Only render the header here if there are NO messages yet
+    if len(st.session_state.messages) == 0:
+        # Single header with DNA icon
+        st.markdown('<div class="main-container">', unsafe_allow_html=True)
+        st.markdown('<div class="custom-header">🧬 Population Biology Model Assistant</div>', unsafe_allow_html=True)
+        st.markdown('<p class="description-text">Ask questions about population biology models, epidemiology concepts, or get help with interpreting model results. This assistant has internet access to provide up-to-date information.</p>', unsafe_allow_html=True)
+        
+        # Add a tip box
+        st.markdown(f'<div class="tip-box">💡 <b>Did you know?</b> {get_random_tip()}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Main chat container
+    main_container = st.container()
+    with main_container:
+        # Display chat messages from history
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+    
     # Handle user input
     if prompt := st.chat_input("Ask about population models, disease dynamics, or model interpretation..."):
         # Add user message to chat history
@@ -312,7 +317,7 @@ When explaining mathematical concepts, be thorough but clear.""",
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
     
-    # If no messages yet, show example questions
+    # Only display sample questions if no messages yet
     if len(st.session_state.messages) == 0:
         st.markdown('<div class="sample-container">', unsafe_allow_html=True)
         st.markdown('<div class="sample-header">Sample Questions to Ask:</div>', unsafe_allow_html=True)
@@ -330,10 +335,6 @@ When explaining mathematical concepts, be thorough but clear.""",
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Add a subtle footer
-    st.markdown('<p class="footer-text">This assistant can help explain concepts related to the population biology models in this application.</p>', unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    # Only set page config when run directly, not when imported
-    st.set_page_config(page_title="Population Biology Model Assistant", layout="wide")
-    run()
+    # Add a subtle footer only if we have messages
+    if len(st.session_state.messages) > 0:
+        st.markdown('<p class="footer-text">This assistant can help explain concepts related to the population biology models in this application.</p>', unsafe_allow_html=True)
