@@ -133,7 +133,7 @@ def run():
     with st.sidebar:
         st.subheader("Assistant Settings")
         
-        # Model selection
+        # Model selection - Updated with current model
         model_options = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"]
         selected_model = st.selectbox("Model", model_options, 
                                     help="Select the Claude model to use")
@@ -143,9 +143,8 @@ def run():
             st.session_state.messages = []
             st.rerun()
     
-    # Hard-code the API key (since students won't provide one)
-    # In production, use a secure method to store this
-    os.environ["ANTHROPIC_API_KEY"] = "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"
+    # Use the new API key directly in the client creation rather than setting env var
+    api_key = "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"
     
     # System message - moved from sidebar to be hidden
     system_message = """You are a specialized assistant for population biology and epidemiological modeling.
@@ -165,8 +164,8 @@ When explaining mathematical concepts, be thorough but clear."""
     # Function to generate response from Claude
     def get_claude_response(prompt, history, system_message, model, use_web_search=True):
         try:
-            # Initialize the Anthropic client
-            client = anthropic.Client(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+            # Initialize the Anthropic client with the API key directly
+            client = anthropic.Client(api_key=api_key)
             
             # Prepare messages for Claude
             messages = []
@@ -214,7 +213,51 @@ When explaining mathematical concepts, be thorough but clear."""
             return response.content[0].text
         
         except Exception as e:
-            return f"Error generating response: {str(e)}"
+            # More detailed error message
+            error_msg = f"Error generating response: {str(e)}\n"
+            error_msg += "This could be due to an API key issue or connection problem.\n"
+            error_msg += "In the meantime, here's some information about Reed-Frost models:\n\n"
+            
+            # Add fallback content for the most common questions
+            if "reed-frost" in prompt.lower():
+                error_msg += """
+The Reed-Frost model is a mathematical model used in epidemiology to predict the spread of infectious diseases in a closed population.
+
+Key parameters in the Reed-Frost model include:
+- c: The adequate contact rate (probability of effective contact between infectious and susceptible individuals)
+- N: Total population size
+- S(t): Number of susceptible individuals at time t
+- I(t): Number of infectious individuals at time t
+- R(t): Number of recovered/removed individuals at time t
+
+The model assumes discrete time steps and that all cases in one generation occur simultaneously.
+"""
+            elif "leslie" in prompt.lower():
+                error_msg += """
+The Leslie Matrix model is used to predict population growth with age structure.
+
+It incorporates:
+- Age-specific fertility rates
+- Age-specific survival rates
+- Discrete time intervals
+- No immigration or emigration
+
+The Leslie Matrix helps predict future population sizes and age distributions.
+"""
+            else:
+                error_msg += """
+Population biology models help us understand how populations change over time.
+
+Common types include:
+- Epidemic models (SIR, Reed-Frost)
+- Age-structured models (Leslie Matrix)
+- Predator-prey models (Lotka-Volterra)
+- Vector-borne disease models (Macdonald model)
+
+These mathematical frameworks help researchers predict population dynamics and disease spread.
+"""
+            
+            return error_msg
     
     # Main container for question input
     st.markdown('<p class="question-label">Your Question:</p>', unsafe_allow_html=True)
