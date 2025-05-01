@@ -46,7 +46,7 @@ def local_css():
     
     /* Question label */
     .question-label {
-        font-size: 2rem;
+        font-size: 3rem;
         margin-bottom: 10px;
         color: #333;
     }
