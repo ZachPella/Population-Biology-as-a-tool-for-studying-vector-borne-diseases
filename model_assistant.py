@@ -47,7 +47,7 @@ def local_css():
     /* Question label */
     .question-label {
         font-size: 2rem !important;
-        margin-bottom: 10px;
+        margin-bottom: 20px;  /* Increased space below label */
         color: #FFF;
     }
     
@@ -79,36 +79,56 @@ def local_css():
         align-items: center;
     }
     
-    .linkedin-icon {
-        margin-left: 10px;
-    }
-  /* Streamlit elements customization */
+    /* FIX FOR SEARCH BAR */
     div[data-testid="stTextInput"] {
-        margin-bottom: 50px !important;  /* Add space below the container */
-    }
-
-    div[data-testid="stTextInput"] input {
-        height: 60px !important;         /* Slightly reduced height to prevent cutoff */
-        font-size: 1.6rem !important;    /* Still larger text */
-        padding: 10px 20px !important;
-        border-radius: 8px !important;
-        border: 2px solid #aaa !important;
-        line-height: 40px !important;    /* Help center the text vertically */
-    }
-
-    /* Make sure the text inside is visible */
-    ::placeholder {
-        font-size: 1.6rem !important;
-        color: rgba(120, 120, 120, 0.8) !important;
+        margin-bottom: 60px !important;  /* Add more space below */
+        margin-top: 15px !important;     /* Add space above */
     }
     
+    div[data-testid="stTextInput"] input {
+        height: 55px !important;           /* Moderate height to avoid cutoff */
+        font-size: 1.4rem !important;      /* Larger text but not too large */
+        padding: 10px 15px !important;     /* Standard padding */
+        border-radius: 8px !important;
+        border: 2px solid #aaa !important;
+        display: block !important;         /* Ensure block display */
+        width: 100% !important;            /* Full width */
+        box-sizing: border-box !important; /* Include padding in width */
+    }
+    
+    /* Placeholder text styling */
+    input::placeholder {
+        font-size: 1.4rem !important;
+        opacity: 0.7 !important;
+    }
+    
+    /* FIX FOR SIDEBAR - API KEY INPUT */
+    .css-1x8cf1d {
+        overflow-y: auto !important;    /* Make sidebar scrollable */
+        max-height: 100vh !important;   /* Full viewport height */
+    }
+    
+    /* Reduce padding in sidebar */
+    div[data-testid="stSidebar"] {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    /* Make sidebar inputs fit better */
+    div[data-testid="stSidebar"] input, 
+    div[data-testid="stSidebar"] textarea {
+        font-size: 0.9rem !important;
+        line-height: normal !important;
+        padding: 8px !important;
+    }
+    
+    /* Chat message styling */
     .stChatMessage {
         border-radius: 10px;
         padding: 15px;
         margin-bottom: 15px;
     }
     
-    /* Chat message styling */
     .stChatMessage[data-testid="chat-message-user"] {
         background-color: #f0f2f6 !important;
     }
@@ -189,7 +209,7 @@ You help students and researchers understand concepts related to:
 Provide educational, accurate responses with relevant equations, explanations, and references. 
 Use your internet access to find up-to-date information when needed.
 When explaining mathematical concepts, be thorough but clear.""",
-            height=200,
+            height=150,
             help="Customize the assistant's instructions"
         )
         
