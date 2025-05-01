@@ -59,20 +59,46 @@ def local_css():
         transform: translateY(-2px) !important;
     }
     
-    /* Chat input styling */
+    /* Chat input styling - ENHANCED */
     .stChatInputContainer {
-        border-radius: 12px !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(120, 120, 255, 0.2) !important;
-        padding: 6px !important;
-        margin-top: 15px !important;
+        border-radius: 20px !important;
+        background-color: rgba(100, 149, 237, 0.15) !important;
+        border: 2px solid rgba(120, 120, 255, 0.4) !important;
+        padding: 8px !important;
+        margin-top: 25px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 100, 0.1) !important;
+    }
+    
+    /* Pulse animation for the chat input */
+    @keyframes gentle-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(100, 149, 237, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(100, 149, 237, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(100, 149, 237, 0); }
+    }
+    
+    /* Chat input focus styling */
+    .stChatInputContainer:focus-within {
+        border: 2px solid rgba(120, 120, 255, 0.8) !important;
+        box-shadow: 0 4px 20px rgba(100, 149, 237, 0.25) !important;
+        animation: gentle-pulse 2s infinite;
     }
     
     /* Chat message styling */
     .stChatMessage {
-        border-radius: 12px !important;
-        padding: 10px 15px !important;
-        margin-bottom: 8px !important;
+        border-radius: 18px !important;
+        padding: 12px 18px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 50, 0.1) !important;
+    }
+    
+    /* User message styling */
+    .stChatMessage[data-testid="chat-message-user"] {
+        background-color: rgba(100, 149, 237, 0.15) !important;
+    }
+    
+    /* Assistant message styling */
+    .stChatMessage[data-testid="chat-message-assistant"] {
+        background-color: rgba(120, 120, 200, 0.1) !important;
     }
     
     /* Tip box styling */
@@ -84,6 +110,22 @@ def local_css():
         margin: 15px 0;
         font-size: 0.9rem;
         color: #D0D0FF;
+    }
+    
+    /* Chat prompt styling - making it stand out */
+    .chat-prompt-container {
+        background-color: rgba(100, 149, 237, 0.15);
+        border-radius: 20px;
+        padding: 15px;
+        margin: 25px 0 15px 0;
+        border: 2px dashed rgba(120, 120, 255, 0.3);
+        text-align: center;
+    }
+    
+    .chat-prompt-text {
+        color: #D0D0FF;
+        font-size: 1.1rem;
+        font-weight: 500;
     }
     
     /* Sample questions container */
@@ -103,15 +145,24 @@ def local_css():
     
     .sample-question {
         color: #B8B8FF;
-        padding: 8px 5px;
-        margin-bottom: 5px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
         font-size: 0.95rem;
         display: flex;
         align-items: center;
+        background-color: rgba(100, 149, 237, 0.05);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .sample-question:hover {
+        background-color: rgba(100, 149, 237, 0.15);
+        transform: translateX(5px);
     }
     
     .sample-question:before {
-        content: "•";
+        content: "💬";
         margin-right: 10px;
         color: rgba(100, 149, 237, 0.8);
     }
@@ -262,6 +313,11 @@ When explaining mathematical concepts, be thorough but clear.""",
         except Exception as e:
             return f"Error generating response: {str(e)}"
     
+    # Function to use example question
+    def use_example_question(question):
+        st.session_state.example_question = question
+        st.experimental_rerun()
+    
     # Display chat interface with only ONE header
     # Only render the header here if there are NO messages yet
     if len(st.session_state.messages) == 0:
@@ -282,8 +338,42 @@ When explaining mathematical concepts, be thorough but clear.""",
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
     
-    # Handle user input
-    if prompt := st.chat_input("Ask about population models, disease dynamics, or model interpretation..."):
+    # If no messages yet, show example questions with clickable behavior
+    if len(st.session_state.messages) == 0:
+        st.markdown('<div class="sample-container">', unsafe_allow_html=True)
+        st.markdown('<div class="sample-header">👋 Try asking one of these questions:</div>', unsafe_allow_html=True)
+        
+        example_questions = [
+            "How does a Reed-Frost model work?",
+            "Explain the Leslie Matrix approach for modeling population dynamics",
+            "What factors influence the basic reproduction number (R₀) in vector-borne diseases?",
+            "How does herd immunity affect disease transmission in the SIR model?",
+            "What's the difference between density-dependent and frequency-dependent transmission?"
+        ]
+        
+        # Create clickable example questions
+        for q in example_questions:
+            if st.button(q, key=f"btn_{q}", use_container_width=True):
+                # This will be handled by the chat input below
+                st.session_state.example_question = q
+                st.experimental_rerun()
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Add a friendly prompt above the chat input
+    st.markdown('<div class="chat-prompt-container">', unsafe_allow_html=True)
+    st.markdown('<p class="chat-prompt-text">💬 Type your question here or click one of the examples above!</p>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Get example question from state if exists
+    example_q = ""
+    if hasattr(st.session_state, 'example_question') and st.session_state.example_question:
+        example_q = st.session_state.example_question
+        # Clear it to avoid reusing
+        st.session_state.example_question = ""
+    
+    # Handle user input with enhanced visual cue
+    if prompt := st.chat_input("Ask about population models, disease dynamics, or model interpretation...", key="chat_input"):
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -317,23 +407,40 @@ When explaining mathematical concepts, be thorough but clear.""",
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
     
-    # Only display sample questions if no messages yet
-    if len(st.session_state.messages) == 0:
-        st.markdown('<div class="sample-container">', unsafe_allow_html=True)
-        st.markdown('<div class="sample-header">Sample Questions to Ask:</div>', unsafe_allow_html=True)
+    # Handle example question if one was selected
+    elif example_q:
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": example_q})
         
-        example_questions = [
-            "How does a Reed-Frost model work?",
-            "Explain the Leslie Matrix approach for modeling population dynamics",
-            "What factors influence the basic reproduction number (R₀) in vector-borne diseases?",
-            "How does herd immunity affect disease transmission in the SIR model?",
-            "What's the difference between density-dependent and frequency-dependent transmission?"
-        ]
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(example_q)
         
-        for q in example_questions:
-            st.markdown(f'<div class="sample-question">{q}</div>', unsafe_allow_html=True)
+        # Display assistant response with a spinner
+        with st.chat_message("assistant"):
+            with st.spinner("Researching population biology concepts..."):
+                # Check if API key is provided
+                if not api_key and "ANTHROPIC_API_KEY" not in st.secrets:
+                    response = "Please enter your Anthropic API key in the sidebar to continue."
+                else:
+                    # Use API key from session or secrets
+                    if not api_key and "ANTHROPIC_API_KEY" in st.secrets:
+                        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+                        
+                    # Generate response
+                    response = get_claude_response(
+                        prompt=example_q,
+                        history=st.session_state.messages[:-1],  # Exclude the current message
+                        system_message=system_message,
+                        model=selected_model,
+                        use_web_search=use_web_search
+                    )
+                
+                # Display response
+                st.markdown(response)
         
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
     
     # Add a subtle footer only if we have messages
     if len(st.session_state.messages) > 0:
