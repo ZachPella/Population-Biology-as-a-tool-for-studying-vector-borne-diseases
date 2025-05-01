@@ -6,25 +6,34 @@ import io
 
 def run():
     st.markdown("""
-    <h1 style="font-family: 'Helvetica Neue', sans-serif; 
+    <div style="margin-bottom: 30px;">
+        <h1 style="font-family: 'Helvetica Neue', sans-serif; 
                  font-size: 3.5rem;
                  font-weight: 700;
-                 background: linear-gradient(45deg, #00CCFF, #0066FF);
+                 background-image: linear-gradient(45deg, #00CCFF, #0066FF);
+                 background-size: 100%;
+                 background-clip: text;
                  -webkit-background-clip: text;
+                 -moz-background-clip: text;
                  -webkit-text-fill-color: transparent;
+                 -moz-text-fill-color: transparent;
+                 text-fill-color: transparent;
                  margin: 20px 0 10px 0;
                  padding: 0;
-                 letter-spacing: 2px;">
-        🧬 Reed-Frost Chain Binomial Model
-    </h1>
-    <h4 style="font-family: 'Helvetica Neue', sans-serif;
+                 letter-spacing: 2px;
+                 display: inline-block;">
+            🧬 Reed-Frost Chain Binomial Model
+        </h1>
+        <br>
+        <h4 style="font-family: 'Helvetica Neue', sans-serif;
                font-size: 1.2rem;
                color: #86c7ff;
                margin-top: 0;
                margin-bottom: 25px;
                font-weight: 400;">
-        🔄 Generation-based epidemic simulator
-    </h4>
+            🔄 Generation-based epidemic simulator
+        </h4>
+    </div>
     """, unsafe_allow_html=True)
     
     st.markdown("""
