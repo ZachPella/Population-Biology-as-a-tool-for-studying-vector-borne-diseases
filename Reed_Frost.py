@@ -146,7 +146,7 @@ def run():
         st.metric("Final Susceptible", f"{results['Susceptible'].iloc[-1]:.2f}")
     
     # Create tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["Epidemic Curve", "Sensitivity Analysis", "Parameter Relationships", "Data Table"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Epidemic Curve", "Sensitivity Analysis", "Parameter Relationships", "Epidemic Parameters"])
     
     with tab1:
         st.header("Epidemic Curve")
@@ -734,7 +734,7 @@ def run():
                 - Some parameter combinations create compensatory effects, where changes in one parameter can offset changes in another
                 - The contour lines represent sets of parameter values that yield equal epidemic outcomes""")
     with tab4:
-        st.header("Data Table")
+        st.header("Epidemic Parameters")
         
         # Show the data table with highlighting
         st.dataframe(results.style.highlight_max(axis=0, color='yellow'))
