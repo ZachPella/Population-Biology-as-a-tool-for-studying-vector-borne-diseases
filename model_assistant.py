@@ -82,8 +82,7 @@ def local_css():
     .linkedin-icon {
         margin-left: 10px;
     }
-    
-   /* Streamlit elements customization - BIGGER SEARCH BAR without cutting off */
+  /* Streamlit elements customization */
     div[data-testid="stTextInput"] {
         margin-bottom: 50px !important;  /* Add space below the container */
     }
@@ -94,20 +93,15 @@ def local_css():
         padding: 10px 20px !important;
         border-radius: 8px !important;
         border: 2px solid #aaa !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; /* Add shadow for emphasis */
+        line-height: 40px !important;    /* Help center the text vertically */
     }
 
     /* Make sure the text inside is visible */
-    div[data-testid="stTextInput"] input::placeholder {
+    ::placeholder {
         font-size: 1.6rem !important;
         color: rgba(120, 120, 120, 0.8) !important;
-        text-overflow: ellipsis !important;  /* Add ellipsis for long placeholder text */
     }
-
-    /* Adjust vertical centering of text */
-    div[data-testid="stTextInput"] input {
-        line-height: 40px !important;    /* Help center the text vertically */
-    }
+    
     .stChatMessage {
         border-radius: 10px;
         padding: 15px;
