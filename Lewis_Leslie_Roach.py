@@ -247,7 +247,7 @@ def run():
         )
     
         # Population dynamics interpretation
-        st.subheader("Population Dynamics Interpretation")
+        st.subheader("Interpretation")
     
         st.markdown("""
         **Cockroach Population Growth Dynamics:**
@@ -360,7 +360,7 @@ def run():
             st.pyplot(fig3)
             
             # Stage distribution interpretation
-            st.subheader("Stage Distribution Interpretation")
+            st.subheader("Interpretation")
             st.markdown("""
             **Cockroach Stage Distribution Dynamics:**
             
@@ -461,7 +461,7 @@ def run():
         )
         
         # Age structure interpretation
-        st.subheader("Age Structure Interpretation")
+        st.subheader("Interpretation")
         
         st.markdown("""
         **Cockroach Population Age Structure:**
