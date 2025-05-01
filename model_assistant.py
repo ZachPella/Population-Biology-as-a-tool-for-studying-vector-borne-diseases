@@ -143,7 +143,7 @@ When explaining mathematical concepts, be thorough but clear."""
         
         # Make the API call with system as a top-level parameter
         response = client.messages.create(
-            model="claude-3-sonnet-20250219",
+            model="claude-3-5-sonnet-latest",
             max_tokens=2000,
             system=system_prompt,  # System prompt as top-level parameter
             messages=api_messages
