@@ -10,6 +10,8 @@ def run():
     st.title("🪳 Leslie Matrix Cockroach Population Model")
     st.markdown("#### 📈 A discrete, age-structured model of population growth")
     st.markdown("""
+    ### Introduction to the Lewis-Leslie Model
+    
     This interactive application simulates cockroach population dynamics using a Leslie Matrix model based on 
     population biology principles for studying vector and pest populations.
     Adjust the parameters using the sliders and see how they affect the population growth.
