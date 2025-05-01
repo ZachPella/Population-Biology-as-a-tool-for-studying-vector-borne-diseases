@@ -6,8 +6,27 @@ import io
 
 def run():
         # Display title and description with equation at the top
-    st.title("🧬 Reed-Frost Chain Binomial Model")
-    st.markdown("#### 🔄 Generation-based epidemic simulator")
+   st.markdown("""
+        <h1 style="font-family: 'Helvetica Neue', sans-serif; 
+                     font-size: 3.5rem;
+                     font-weight: 700;
+                     background: linear-gradient(45deg, #00CCFF, #0066FF);
+                     -webkit-background-clip: text;
+                     -webkit-text-fill-color: transparent;
+                     margin: 20px 0 10px 0;
+                     padding: 0;
+                     letter-spacing: 2px;">
+            🧬 Reed-Frost Chain Binomial Model
+        </h1>
+        <h4 style="font-family: 'Helvetica Neue', sans-serif;
+                   font-size: 1.2rem;
+                   color: #86c7ff;
+                   margin-top: 0;
+                   margin-bottom: 25px;
+                   font-weight: 400;">
+            🔄 Generation-based epidemic simulator
+        </h4>
+        """, unsafe_allow_html=True)
     st.markdown("""
     ### Introduction to the Reed-Frost Model
     
