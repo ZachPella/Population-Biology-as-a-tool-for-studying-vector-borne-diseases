@@ -699,14 +699,14 @@ def run():
         
         # Create a dataframe for the life table data based on Table 24.2
         life_table_data = {
-            "Life stage": ["Egg", "Larva", "Larva", "Larva", "Larva", "Larva", "Larva", "Pupa", 
-                           "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult",
-                           "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult",
-                           "Adult", "Adult", "Adult", "Adult", "Adult"],
-            "Chronological age (days)": list(range(29)),
-            "Probability of daily survival (p)": [0.5] + [0.6]*7 + [0.9]*20,
-            "Fecundity (f)": [0]*12 + [120] + [0]*4 + [100] + [0]*4 + [80] + [0]*4 + [60] + [0]
-        }
+    "Life stage": ["Egg", "Larva", "Larva", "Larva", "Larva", "Larva", "Larva", "Pupa", 
+                   "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult",
+                   "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult",
+                   "Adult", "Adult", "Adult", "Adult", "Adult"],
+    "Chronological age (days)": list(range(29)),
+    "Probability of daily survival (p)": [0.5] + [0.6]*7 + [0.9]*21,  # Changed to 21 adult values to get 29 total
+    "Fecundity (f)": [0]*12 + [120] + [0]*4 + [100] + [0]*4 + [80] + [0]*4 + [60] + [0]
+}
         
         life_table_df = pd.DataFrame(life_table_data)
         
