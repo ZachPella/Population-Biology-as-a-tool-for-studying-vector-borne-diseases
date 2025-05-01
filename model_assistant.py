@@ -6,6 +6,8 @@ from datetime import datetime
 import base64
 from random import choice
 
+# Note: Do NOT call st.set_page_config() here since app.py already has it
+
 def add_bg_from_url(url):
     """Add background image from URL"""
     st.markdown(
@@ -127,17 +129,8 @@ def get_random_tip():
 def run():
     """Main function to run the assistant interface"""
     
-    # Set page config
-    st.set_page_config(
-        page_title="Population Biology Model Assistant",
-        page_icon="🧬",
-        layout="wide"
-    )
-    
-    # Add background image
-    add_bg_from_url("https://images.unsplash.com/photo-1557682250-27c44a49ea8d?q=80&w=2148&auto=format&fit=crop")
-    
-    # Apply custom CSS
+    # Apply visual enhancements
+    # add_bg_from_url("https://images.unsplash.com/photo-1557682250-27c44a49ea8d?q=80&w=2148&auto=format&fit=crop")
     local_css()
     
     # Initialize session state for chat history if it doesn't exist
@@ -272,9 +265,13 @@ When explaining mathematical concepts, be thorough but clear.""",
         with st.chat_message("assistant"):
             with st.spinner("Researching population biology concepts..."):
                 # Check if API key is provided
-                if not api_key:
+                if not api_key and "ANTHROPIC_API_KEY" not in st.secrets:
                     response = "Please enter your Anthropic API key in the sidebar to continue."
                 else:
+                    # Use API key from session or secrets
+                    if not api_key and "ANTHROPIC_API_KEY" in st.secrets:
+                        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+                        
                     # Generate response
                     response = get_claude_response(
                         prompt=prompt,
@@ -313,6 +310,6 @@ When explaining mathematical concepts, be thorough but clear.""",
     st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    # This allows the file to be run directly for testing
+    # Only set page config when run directly, not when imported
     st.set_page_config(page_title="Population Biology Model Assistant", layout="wide")
     run()
