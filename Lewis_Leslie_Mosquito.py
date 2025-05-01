@@ -7,8 +7,27 @@ import io
 
 def run():    
     # Display title and description with academic context
-    st.title("🦟 Leslie Matrix Mosquito Population Model")
-    st.markdown("#### 🧬 A discrete, age-structured population dynamics simulator")
+    st.markdown("""
+    <h1 style="font-family: 'Helvetica Neue', sans-serif; 
+                 font-size: 3.5rem;
+                 font-weight: 700;
+                 background: linear-gradient(45deg, #F44336, #D32F2F);
+                 -webkit-background-clip: text;
+                 -webkit-text-fill-color: transparent;
+                 margin: 20px 0 10px 0;
+                 padding: 0;
+                 letter-spacing: 2px;">
+        🦟 Leslie Matrix Mosquito Population Model
+    </h1>
+    <h4 style="font-family: 'Helvetica Neue', sans-serif;
+               font-size: 1.2rem;
+               color: #FF8A80;
+               margin-top: 0;
+               margin-bottom: 25px;
+               font-weight: 400;">
+        🧬 A discrete, age-structured population dynamics simulator
+    </h4>
+    """, unsafe_allow_html=True)
     st.markdown("""
     ### Introduction to the Lewis-Leslie Model
     
