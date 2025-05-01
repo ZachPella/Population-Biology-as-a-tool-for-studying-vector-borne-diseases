@@ -230,9 +230,6 @@ When explaining mathematical concepts, be thorough but clear."""
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": user_question})
         
-        # Reset the input field
-        st.session_state.user_question_input = ""
-        
         # Display user message
         with st.chat_message("user"):
             st.markdown(user_question)
@@ -254,6 +251,9 @@ When explaining mathematical concepts, be thorough but clear."""
         
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        # Use rerun instead of trying to directly modify the input field
+        st.rerun()
     
     # Display chat history if there are messages
     else:
