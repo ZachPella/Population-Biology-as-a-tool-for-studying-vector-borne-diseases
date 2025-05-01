@@ -18,8 +18,27 @@ except ImportError:
 
 def run():
     # Display title and description
-    st.title("🦟 Macdonald's Vectorial Capacity Model")
-    st.markdown("#### 🔬 Quantifying vector-borne disease transmission potential")
+    st.markdown("""
+    <h1 style="font-family: 'Helvetica Neue', sans-serif; 
+                 font-size: 3.5rem;
+                 font-weight: 700;
+                 background: linear-gradient(45deg, #9C27B0, #673AB7);
+                 -webkit-background-clip: text;
+                 -webkit-text-fill-color: transparent;
+                 margin: 20px 0 10px 0;
+                 padding: 0;
+                 letter-spacing: 2px;">
+        🦟 Macdonald's Vectorial Capacity Model
+    </h1>
+    <h4 style="font-family: 'Helvetica Neue', sans-serif;
+               font-size: 1.2rem;
+               color: #CE93D8;
+               margin-top: 0;
+               margin-bottom: 25px;
+               font-weight: 400;">
+        🔬 Quantifying vector-borne disease transmission potential
+    </h4>
+    """, unsafe_allow_html=True)
     st.markdown("""
     ### Introduction to the Macdonald Model
 
