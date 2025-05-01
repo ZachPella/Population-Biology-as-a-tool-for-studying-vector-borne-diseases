@@ -17,27 +17,35 @@ except ImportError:
 
 
 def run():
-    # Display title and description
     st.markdown("""
-    <h1 style="font-family: 'Helvetica Neue', sans-serif; 
+    <div style="margin-bottom: 30px;">
+        <h1 style="font-family: 'Helvetica Neue', sans-serif; 
                  font-size: 3.5rem;
                  font-weight: 700;
-                 background: linear-gradient(45deg, #9C27B0, #673AB7);
+                 background-image: linear-gradient(45deg, #9C27B0, #673AB7);
+                 background-size: 100%;
+                 background-clip: text;
                  -webkit-background-clip: text;
+                 -moz-background-clip: text;
                  -webkit-text-fill-color: transparent;
+                 -moz-text-fill-color: transparent;
+                 text-fill-color: transparent;
                  margin: 20px 0 10px 0;
                  padding: 0;
-                 letter-spacing: 2px;">
-        🦟 Macdonald's Vectorial Capacity Model
-    </h1>
-    <h4 style="font-family: 'Helvetica Neue', sans-serif;
+                 letter-spacing: 2px;
+                 display: inline-block;">
+            🦟 Macdonald's Vectorial Capacity Model
+        </h1>
+        <br>
+        <h4 style="font-family: 'Helvetica Neue', sans-serif;
                font-size: 1.2rem;
                color: #CE93D8;
                margin-top: 0;
                margin-bottom: 25px;
                font-weight: 400;">
-        🔬 Quantifying vector-borne disease transmission potential
-    </h4>
+            🔬 Quantifying vector-borne disease transmission potential
+        </h4>
+    </div>
     """, unsafe_allow_html=True)
     st.markdown("""
     ### Introduction to the Macdonald Model
