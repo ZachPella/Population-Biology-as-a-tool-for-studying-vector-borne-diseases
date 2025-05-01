@@ -144,7 +144,7 @@ def run():
             st.rerun()
     
     # Use the new API key directly in the client creation rather than setting env var
-    api_key = "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"
+    api_key = "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"
     
     # System message - moved from sidebar to be hidden
     system_message = """You are a specialized assistant for population biology and epidemiological modeling.
