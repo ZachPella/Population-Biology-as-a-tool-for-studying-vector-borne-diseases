@@ -10,6 +10,8 @@ def run():
     st.title("🦟 Leslie Matrix Mosquito Population Model")
     st.markdown("#### 🧬 A discrete, age-structured population dynamics simulator")
     st.markdown("""
+    ### Introduction to the Lewis-Leslie Model
+    
     This interactive application simulates mosquito population dynamics using a Leslie Matrix model based on 
     population biology principles for studying vector populations.
     Adjust the parameters using the sliders and see how they affect the population growth.
