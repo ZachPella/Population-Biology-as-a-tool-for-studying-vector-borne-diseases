@@ -5,8 +5,7 @@ import numpy as np
 import io  
 
 def run():
-        # Display title and description with equation at the top
-   st.markdown("""
+        st.markdown("""
         <h1 style="font-family: 'Helvetica Neue', sans-serif; 
                      font-size: 3.5rem;
                      font-weight: 700;
