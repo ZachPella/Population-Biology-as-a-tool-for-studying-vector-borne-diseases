@@ -23,7 +23,7 @@ def run():
     and fecundity values in the first row.
     
     **Leslie Matrix Equation**:
-    $n_{t+1} = M x n_t$
+    $n_{t+1} = M × n_{t}$
     
     Where:
     - $n_{t+1}$ is the population vector at the next time step
