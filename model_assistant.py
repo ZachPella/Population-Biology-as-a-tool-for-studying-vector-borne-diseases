@@ -1,171 +1,155 @@
+# Internet-Connected Claude Chatbot for Streamlit
+# This application integrates a Claude-powered chatbot with web search capabilities
+# into your existing Streamlit app to help students answer questions.
+
 import streamlit as st
-import requests
-import json
+import anthropic
+import os
+from datetime import datetime
 
-def add_chat_interface():
-    """Add the chatbot interface to the Streamlit sidebar"""
-    st.sidebar.title("📚 Model Assistant")
-    st.sidebar.write("Ask me about population biology concepts!")
+# Configure page
+st.set_page_config(
+    page_title="Classroom Assistant",
+    page_icon="🤖",
+    layout="wide"
+)
+
+# Initialize session state for chat history if it doesn't exist
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "sidebar_expanded" not in st.session_state:
+    st.session_state.sidebar_expanded = False
+
+# Function to toggle sidebar
+def toggle_sidebar():
+    st.session_state.sidebar_expanded = not st.session_state.sidebar_expanded
+
+# Configure sidebar
+with st.sidebar:
+    st.title("Classroom Assistant Settings")
     
-    # Initialize session state for chat history
-    if "messages" not in st.session_state:
+    # API key input
+    api_key = st.text_input("Anthropic API Key", type="password")
+    if api_key:
+        os.environ["ANTHROPIC_API_KEY"] = api_key
+    
+    # Model selection
+    model_options = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"]
+    selected_model = st.selectbox("Choose Claude Model", model_options)
+    
+    # Temperature adjustment
+    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1)
+    
+    # System message customization
+    system_message = st.text_area(
+        "System Message", 
+        value="You are a helpful classroom assistant that helps students answer questions. You're connected to the internet so you can find up-to-date information. Always provide educational, accurate responses appropriate for students.",
+        height=150
+    )
+    
+    # Web search toggle
+    use_web_search = st.toggle("Enable Web Search", value=True)
+    
+    # Clear chat button
+    if st.button("Clear Chat History"):
         st.session_state.messages = []
-    
-    # Display chat messages from history
-    for message in st.session_state.messages:
-        with st.sidebar.chat_message(message["role"]):
-            st.sidebar.markdown(message["content"])
-    
-    # Suggestions for common questions
-    if not st.session_state.messages:
-        st.sidebar.markdown("### Try asking:")
-        cols = st.sidebar.columns(2)
-        
-        if cols[0].button("Leslie Matrix basics"):
-            user_query = "What is the Leslie Matrix model and how does it work?"
-            st.session_state.messages.append({"role": "user", "content": user_query})
-            _handle_query(user_query)
-            
-        if cols[1].button("Vectorial capacity"):
-            user_query = "Explain Macdonald's vectorial capacity model"
-            st.session_state.messages.append({"role": "user", "content": user_query})
-            _handle_query(user_query)
-            
-        if cols[0].button("Survival impact in VC"):
-            user_query = "Why does daily survival rate have a large impact in vectorial capacity?"
-            st.session_state.messages.append({"role": "user", "content": user_query})
-            _handle_query(user_query)
-            
-        if cols[1].button("Key model parameters"):
-            user_query = "What are the key parameters in Leslie Matrix and Macdonald models?"
-            st.session_state.messages.append({"role": "user", "content": user_query})
-            _handle_query(user_query)
-    
-    # Chat input
-    user_query = st.sidebar.text_input("Your question:", key="user_question")
-    if user_query:
-        st.session_state.messages.append({"role": "user", "content": user_query})
-        with st.sidebar.chat_message("user"):
-            st.sidebar.markdown(user_query)
-        
-        _handle_query(user_query)
+        st.rerun()
 
-def _handle_query(query):
-    """Handle a user query, get a response, and update the chat"""
-    with st.sidebar.spinner("Thinking..."):
-        # In a real implementation, you would use a web search API
-        # For now, we'll provide knowledge-based responses for common questions
+# Main content area
+st.title("Classroom Assistant")
+st.caption("I can help answer questions using the latest information from the internet!")
+
+# Display chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Function to generate response from Claude
+def get_claude_response(prompt, history, system_message, model, temperature, use_web_search):
+    try:
+        client = anthropic.Client(api_key=os.environ.get("ANTHROPIC_API_KEY"))
         
-        if "leslie matrix" in query.lower() or "age structured" in query.lower() or "age-structured" in query.lower():
-            response = """
-            **Leslie Matrix Model**
-            
-            The Leslie Matrix is a discrete, age-structured model used in population ecology to predict growth of populations. It was developed by P.H. Leslie in the 1940s.
-            
-            The model works by:
-            - Dividing a population into age classes
-            - Creating a square matrix with:
-              - Fecundity values in the first row
-              - Survival probabilities in the sub-diagonal
-            - Multiplying this matrix by the population vector to project future population
-            
-            The basic equation is: 
-            n(t+1) = M × n(t)
-            
-            Where:
-            - n(t) is the population vector at time t
-            - M is the Leslie Matrix
-            
-            This model helps predict both population size and age structure changes over time.
-            
-            Source: Leslie matrix - Wikipedia (https://en.wikipedia.org/wiki/Leslie_matrix)
-            """
-        elif "vectorial capacity" in query.lower() or "macdonald" in query.lower():
-            response = """
-            **Macdonald's Vectorial Capacity Model**
-            
-            Vectorial capacity is a key measure in vector-borne disease transmission, representing the number of potentially infectious bites arising from vectors that bite a single infectious host in one day.
-            
-            Macdonald's equation for vectorial capacity (V) is:
-            V = ma²bp^n/-ln(p)
-            
-            Where:
-            - m = vector density in relation to hosts
-            - a = biting rate (humans bitten per mosquito per day)
-            - b = vector competence (proportion of vectors developing infection)
-            - p = daily vector survival rate
-            - n = extrinsic incubation period (days)
-            
-            This model provides critical insights for vector control strategies.
-            
-            Source: Vectorial capacity and vector control (https://academic.oup.com/trstmh/article/110/2/107/2578714)
-            """
-        elif "daily survival" in query.lower() or "survival rate" in query.lower():
-            response = """
-            **Impact of Daily Survival Rate on Vectorial Capacity**
-            
-            The daily survival rate (p) has the strongest effect on vectorial capacity because:
-            
-            1. It appears twice in the equation: as p^n in the numerator and -ln(p) in the denominator
-            2. Small changes in survival create large changes in vectorial capacity
-            3. According to research, a 10% increase in survival can lead to a >200% increase in vectorial capacity
-            
-            This is why many vector control strategies focus on reducing adult vector survival through insecticides.
-            
-            Source: An Age-Structured Extension to the Vectorial Capacity Model (https://pmc.ncbi.nlm.nih.gov/articles/PMC3378582/)
-            """
-        elif "control" in query.lower() or "intervention" in query.lower():
-            response = """
-            **Vector Control Strategies Based on Models**
-            
-            Mathematical models like Leslie Matrix and Macdonald's vectorial capacity have important implications for disease control:
-            
-            For vector-borne diseases:
-            - Reducing adult vector survival (p) has the largest impact
-            - Vector control programs use this insight to focus on adult mosquito control
-            - Insecticide-treated nets and indoor residual spraying target the adult stage
-            
-            For age-structured populations:
-            - Leslie Matrix models help identify which life stages most affect population growth
-            - Control strategies can target the most influential life stages
-            
-            Source: Vectorial capacity and vector control (https://pmc.ncbi.nlm.nih.gov/articles/PMC4731004/)
-            """
-        elif "parameter" in query.lower() or "sensitivity" in query.lower():
-            response = """
-            **Key Parameters in Population Biology Models**
-            
-            **Leslie Matrix key parameters:**
-            - Fecundity values (first row): Average number of offspring per individual in each age class
-            - Survival probabilities (sub-diagonal): Probability of surviving from one age class to the next
-            
-            **Vectorial Capacity key parameters:**
-            - Vector:host ratio (m): Number of vectors per host
-            - Biting rate (a): Appears squared in the equation (a²)
-            - Daily survival rate (p): Has the strongest effect on vectorial capacity
-            - Extrinsic incubation period (n): Time for pathogen development in vector
-            - Vector competence (b): Proportion of vectors that develop infection
-            
-            Sensitivity analysis shows that survival rate has the most significant impact on vectorial capacity.
-            
-            Source: 7.3: Leslie Matrix Models - Biology LibreTexts (https://bio.libretexts.org/Courses/Gettysburg_College/02:_Principles_of_Ecology_-_Gettysburg_College_ES_211/07:_A_Quantitative_Approach_to_Population_Ecology/7.03:_Leslie_Matrix_Models)
-            """
-        else:
-            response = """
-            I can help answer questions about population biology models like the Leslie Matrix (for age-structured population dynamics) and Macdonald's Vectorial Capacity model (for vector-borne disease transmission).
-            
-            Some topics I can explain:
-            - How these models work mathematically
-            - Key parameters and their biological meaning
-            - Applications to ecology and epidemiology
-            - How these models inform control strategies
-            
-            Please feel free to ask a specific question about either model!
-            """
+        # Prepare messages for Claude
+        messages = [{"role": "system", "content": system_message}]
         
-        # Add response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        # Add chat history
+        for msg in history:
+            if msg["role"] == "assistant":
+                messages.append({"role": "assistant", "content": msg["content"]})
+            else:
+                messages.append({"role": "user", "content": msg["content"]})
         
-        # Display the response
-        with st.sidebar.chat_message("assistant"):
-            st.sidebar.markdown(response)
+        # Add current user message
+        messages.append({"role": "user", "content": prompt})
+        
+        # Set up tools for web search if enabled
+        tools = None
+        if use_web_search:
+            tools = [
+                {
+                    "name": "web_search",
+                    "description": "Search the web for information",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The search query"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                }
+            ]
+        
+        # Get response from Claude
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            temperature=temperature,
+            system=system_message,
+            messages=messages[1:],  # Skip system message as it's passed separately
+            tools=tools
+        )
+        
+        return response.content[0].text
+    
+    except Exception as e:
+        return f"Error generating response: {str(e)}"
+
+# Handle user input
+if prompt := st.chat_input("Ask your question..."):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    # Display user message
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    # Display assistant response with a spinner
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            # Check if API key is provided
+            if not api_key:
+                response = "Please enter your Anthropic API key in the sidebar to continue."
+            else:
+                # Generate response
+                response = get_claude_response(
+                    prompt=prompt,
+                    history=st.session_state.messages[:-1],  # Exclude the current message
+                    system_message=system_message,
+                    model=selected_model,
+                    temperature=temperature,
+                    use_web_search=use_web_search
+                )
+            
+            # Display response
+            st.markdown(response)
+    
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
+# Add a footer
+st.markdown("---")
+st.caption(f"Classroom Assistant powered by Claude • {datetime.now().strftime('%Y-%m-%d')}")
