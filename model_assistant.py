@@ -46,7 +46,7 @@ def local_css():
     
     /* Question label */
     .question-label {
-        font-size: 1.5rem;
+        font-size: 1rem;
         margin-bottom: 10px;
         color: #333;
     }
@@ -73,7 +73,7 @@ def local_css():
         margin-top: 60px;
         text-align: center;
         color: #555;
-        font-size: 0.9rem;
+        font-size: 2rem;
         display: flex;
         justify-content: center;
         align-items: center;
