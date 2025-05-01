@@ -21,6 +21,7 @@ def run():
     st.title("🦟 Macdonald's Vectorial Capacity Model")
     st.markdown("#### 🔬 Quantifying vector-borne disease transmission potential")
     st.markdown("""
+    ### Introduction to the Macdonald Model
 
     This interactive application simulates vectorial capacity in vector-borne disease transmission using Macdonald's model.
     Adjust the parameters using the sliders and see how they affect the vectorial capacity and disease transmission potential.
