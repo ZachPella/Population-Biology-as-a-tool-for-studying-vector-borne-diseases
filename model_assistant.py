@@ -85,8 +85,8 @@ def local_css():
     
     /* Streamlit elements customization */
     div[data-testid="stTextInput"] input {
-        height: 50px;
-        font-size: 1.1rem;
+        height: 70px;
+        font-size: 1.5rem;
         padding: 10px 15px;
         border-radius: 4px;
     }
