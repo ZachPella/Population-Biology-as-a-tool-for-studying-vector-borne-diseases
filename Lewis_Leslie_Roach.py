@@ -23,11 +23,11 @@ def run():
     and fecundity values in the first row.
     
     **Leslie Matrix Equation**:
-    $n_{t+1} = L n_t$
+    $n_{t+1} = M x n_t$
     
     Where:
     - $n_{t+1}$ is the population vector at the next time step
-    - $L$ is the Leslie Matrix containing survival rates and fecundity values
+    - $M$ is the Leslie Matrix containing survival rates and fecundity values
     - $n_t$ is the current population vector by age class
     
     **The Model's Logic**:
