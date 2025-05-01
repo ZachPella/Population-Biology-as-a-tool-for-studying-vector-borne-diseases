@@ -14,7 +14,7 @@ app = st.sidebar.radio("Choose a model or assistant:", [
     "Leslie Matrix - Roach",
     "Leslie Matrix - Mosquito",
     "Macdonald Model",
-    "Model Assistant"  # New option for the chatbot
+    "Model Assistant"  # Option for the chatbot
 ])
 
 # Run the appropriate module based on selection
@@ -27,16 +27,6 @@ elif app == "Leslie Matrix - Mosquito":
 elif app == "Macdonald Model":
     Macdonald.run()
 elif app == "Model Assistant":
-    # Display a small header for the assistant page
-    st.header("Population Biology Model Assistant")
-    st.markdown("""
-    Ask questions about population biology models, epidemiology concepts, 
-    or get help with interpreting model results. This assistant has internet 
-    access to provide up-to-date information.
-    """)
-    
-    # Add a divider
-    st.divider()
-    
-    # Run the assistant module
+    # Run the assistant module without adding any headers here
+    # Let model_assistant.py handle all the UI elements
     model_assistant.run()
