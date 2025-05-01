@@ -51,21 +51,15 @@ def local_css():
         color: #FFF;
     }
     
-    /* Example questions styling */
-    .example-button {
-        width: 100%;
-        text-align: left;
-        background-color: #f0f2f6;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 10px 15px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        transition: background-color 0.2s;
+    /* Simple search bar that doesn't get cut off */
+    div[data-testid="stTextInput"] {
+        margin-bottom: 60px !important; 
     }
     
-    .example-button:hover {
-        background-color: #e0e2e6;
+    div[data-testid="stTextInput"] input {
+        height: 45px !important;
+        font-size: 1.2rem !important;
+        padding: 10px !important;
     }
     
     /* Footer styling */
@@ -77,49 +71,6 @@ def local_css():
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-    
-    /* FIX FOR SEARCH BAR */
-    div[data-testid="stTextInput"] {
-        margin-bottom: 60px !important;  /* Add more space below */
-        margin-top: 15px !important;     /* Add space above */
-    }
-    
-    div[data-testid="stTextInput"] input {
-        height: 55px !important;           /* Moderate height to avoid cutoff */
-        font-size: 1.4rem !important;      /* Larger text but not too large */
-        padding: 10px 15px !important;     /* Standard padding */
-        border-radius: 8px !important;
-        border: 2px solid #aaa !important;
-        display: block !important;         /* Ensure block display */
-        width: 100% !important;            /* Full width */
-        box-sizing: border-box !important; /* Include padding in width */
-    }
-    
-    /* Placeholder text styling */
-    input::placeholder {
-        font-size: 1.4rem !important;
-        opacity: 0.7 !important;
-    }
-    
-    /* FIX FOR SIDEBAR - API KEY INPUT */
-    .css-1x8cf1d {
-        overflow-y: auto !important;    /* Make sidebar scrollable */
-        max-height: 100vh !important;   /* Full viewport height */
-    }
-    
-    /* Reduce padding in sidebar */
-    div[data-testid="stSidebar"] {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-    }
-    
-    /* Make sidebar inputs fit better */
-    div[data-testid="stSidebar"] input, 
-    div[data-testid="stSidebar"] textarea {
-        font-size: 0.9rem !important;
-        line-height: normal !important;
-        padding: 8px !important;
     }
     
     /* Chat message styling */
@@ -142,7 +93,7 @@ def local_css():
         padding-top: 0;
     }
     
-    /* Button styling */
+    /* Simple button styling */
     .stButton button {
         border-radius: 4px;
         padding: 8px 16px;
@@ -178,25 +129,26 @@ def run():
     # Subtitle
     st.markdown('<p class="subtitle">Ask questions about population biology models:</p>', unsafe_allow_html=True)
     
-    # Configure sidebar for the assistant settings
+    # Configure sidebar for model selection only (removed API key)
     with st.sidebar:
         st.subheader("Assistant Settings")
-        
-        # API key input (can be stored in environment variables or secrets in production)
-        api_key = st.text_input("Anthropic API Key", type="password", 
-                              help="Enter your Anthropic API key to enable the assistant")
-        if api_key:
-            os.environ["ANTHROPIC_API_KEY"] = api_key
         
         # Model selection
         model_options = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"]
         selected_model = st.selectbox("Model", model_options, 
                                     help="Select the Claude model to use")
         
-        # Customize system message
-        system_message = st.text_area(
-            "System Instructions", 
-            value="""You are a specialized assistant for population biology and epidemiological modeling.
+        # Clear chat button
+        if st.button("Clear Chat History"):
+            st.session_state.messages = []
+            st.rerun()
+    
+    # Hard-code the API key (since students won't provide one)
+    # In production, use a secure method to store this
+    os.environ["ANTHROPIC_API_KEY"] = "your-api-key-here"
+    
+    # System message - moved from sidebar to be hidden
+    system_message = """You are a specialized assistant for population biology and epidemiological modeling.
             
 You help students and researchers understand concepts related to:
 - Reed-Frost models
@@ -208,22 +160,10 @@ You help students and researchers understand concepts related to:
 
 Provide educational, accurate responses with relevant equations, explanations, and references. 
 Use your internet access to find up-to-date information when needed.
-When explaining mathematical concepts, be thorough but clear.""",
-            height=150,
-            help="Customize the assistant's instructions"
-        )
-        
-        # Web search toggle
-        use_web_search = st.toggle("Enable Web Search", value=True,
-                                  help="Allow the assistant to search the internet for information")
-        
-        # Clear chat button
-        if st.button("Clear Chat History"):
-            st.session_state.messages = []
-            st.rerun()
+When explaining mathematical concepts, be thorough but clear."""
     
     # Function to generate response from Claude
-    def get_claude_response(prompt, history, system_message, model, use_web_search):
+    def get_claude_response(prompt, history, system_message, model, use_web_search=True):
         try:
             # Initialize the Anthropic client
             client = anthropic.Client(api_key=os.environ.get("ANTHROPIC_API_KEY"))
@@ -276,15 +216,10 @@ When explaining mathematical concepts, be thorough but clear.""",
         except Exception as e:
             return f"Error generating response: {str(e)}"
     
-    # Function to use example question
-    def use_example_question(question):
-        st.session_state.example_question = question
-        st.experimental_rerun()
-    
     # Main container for question input
     st.markdown('<p class="question-label">Your Question:</p>', unsafe_allow_html=True)
     
-    # User input field - larger and more prominent
+    # User input field - simpler styling to avoid cutoff
     user_question = st.text_input("", 
                                 label_visibility="collapsed", 
                                 placeholder="Type your question about population biology models...",
@@ -305,22 +240,14 @@ When explaining mathematical concepts, be thorough but clear.""",
         # Display assistant response with a spinner
         with st.chat_message("assistant"):
             with st.spinner("Researching population biology concepts..."):
-                # Check if API key is provided
-                if not api_key and "ANTHROPIC_API_KEY" not in st.secrets:
-                    response = "Please enter your Anthropic API key in the sidebar to continue."
-                else:
-                    # Use API key from session or secrets
-                    if not api_key and "ANTHROPIC_API_KEY" in st.secrets:
-                        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
-                        
-                    # Generate response
-                    response = get_claude_response(
-                        prompt=user_question,
-                        history=st.session_state.messages[:-1],  # Exclude the current message
-                        system_message=system_message,
-                        model=selected_model,
-                        use_web_search=use_web_search
-                    )
+                # Generate response
+                response = get_claude_response(
+                    prompt=user_question,
+                    history=st.session_state.messages[:-1],  # Exclude the current message
+                    system_message=system_message,
+                    model=selected_model,
+                    use_web_search=True
+                )
                 
                 # Display response
                 st.markdown(response)
