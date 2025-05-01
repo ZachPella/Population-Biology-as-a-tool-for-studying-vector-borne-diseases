@@ -300,10 +300,35 @@ def run():
         st.session_state.last_prompt = None
     
     # Title with robot emoji
+    # Title with robot emoji - enhanced with gradient
     st.markdown("""
-    <div class="title-container">
-        <h1 class="main-title">Population Biology Model Assistant</h1>
-        <span class="robot-icon">🤖</span>
+    <div style="margin-bottom: 30px;">
+        <h1 style="font-family: 'Helvetica Neue', sans-serif; 
+                 font-size: 3.5rem;
+                 font-weight: 700;
+                 background-image: linear-gradient(45deg, #9553E9, #6F42C1);
+                 background-size: 100%;
+                 background-clip: text;
+                 -webkit-background-clip: text;
+                 -moz-background-clip: text;
+                 -webkit-text-fill-color: transparent;
+                 -moz-text-fill-color: transparent;
+                 text-fill-color: transparent;
+                 margin: 20px 0 10px 0;
+                 padding: 0;
+                 letter-spacing: 2px;
+                 display: inline-block;">
+            🤖 Population Biology Model Assistant
+        </h1>
+        <br>
+        <h4 style="font-family: 'Helvetica Neue', sans-serif;
+               font-size: 1.2rem;
+               color: #B399D4;
+               margin-top: 0;
+               margin-bottom: 25px;
+               font-weight: 400;">
+            Ask questions about population biology models:
+        </h4>
     </div>
     """, unsafe_allow_html=True)
     
