@@ -3,231 +3,128 @@ import streamlit as st
 import anthropic
 import os
 from datetime import datetime
-from random import choice
-
-# Note: Do NOT call st.set_page_config() here since app.py already has it
 
 def local_css():
     """Define custom CSS styles"""
     st.markdown("""
     <style>
-    /* Main container styles */
-    .main-container {
-        background-color: rgba(17, 17, 40, 0.4);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 15px 0;
-        border: 1px solid rgba(100, 149, 237, 0.2);
-        backdrop-filter: blur(10px);
+    /* Main page styling */
+    .main {
+        padding: 30px;
     }
     
     /* Header styling */
-    .custom-header {
-        font-family: 'Helvetica Neue', sans-serif;
-        color: #E0E0FF;
-        font-weight: 600;
-        font-size: 1.8rem;
-        margin-bottom: 10px;
+    .title-container {
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
+        margin-bottom: 40px;
+        gap: 15px;
     }
     
-    /* Description text */
-    .description-text {
-        color: #B8B8FF;
-        font-size: 0.95rem;
-        font-weight: 300;
-        line-height: 1.5;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid rgba(120, 120, 255, 0.2);
+    .main-title {
+        font-family: 'Helvetica Neue', sans-serif;
+        color: #026302;
+        font-weight: 600;
+        font-size: 2.5rem;
+        margin: 0;
+        text-align: center;
     }
     
-    /* Button styling */
-    .stButton button {
-        background-color: rgba(100, 149, 237, 0.7) !important;
-        color: white !important;
-        border-radius: 10px !important;
-        border: none !important;
-        padding: 8px 15px !important;
-        transition: all 0.3s ease !important;
+    .robot-icon {
+        font-size: 3rem;
     }
     
-    .stButton button:hover {
-        background-color: rgba(100, 149, 237, 0.9) !important;
-        transform: translateY(-2px) !important;
+    /* Subtitle styling */
+    .subtitle {
+        color: #d31010;
+        font-size: 1.6rem;
+        margin: 30px 0;
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    /* Question label */
+    .question-label {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: #333;
     }
     
     /* Example questions styling */
     .example-button {
-        background-color: rgba(70, 130, 230, 0.6) !important;
-        color: white !important;
-        border-radius: 12px !important;
-        border: none !important;
-        margin-bottom: 8px !important;
-        text-align: center !important;
-        transition: all 0.2s ease !important;
-        cursor: pointer !important;
-        padding: 12px 20px !important;
-        font-size: 0.95rem !important;
+        width: 100%;
+        text-align: left;
+        background-color: #f0f2f6;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
     }
     
     .example-button:hover {
-        background-color: rgba(70, 130, 230, 0.8) !important;
-        transform: translateY(-2px) !important;
-    }
-    
-    /* Chat input styling - ENHANCED & BIGGER */
-    .stChatInputContainer {
-        border-radius: 25px !important;
-        background-color: rgba(100, 149, 237, 0.15) !important;
-        border: 3px solid rgba(120, 120, 255, 0.4) !important;
-        padding: 10px !important;
-        margin-top: 25px !important;
-        margin-bottom: 30px !important;
-        box-shadow: 0 6px 15px rgba(0, 0, 100, 0.15) !important;
-    }
-    
-    /* Make the input text larger */
-    .stChatInputContainer input {
-        font-size: 1.1rem !important;
-        padding: 15px 20px !important;
-        height: 60px !important;
-    }
-    
-    /* Pulse animation for the chat input */
-    @keyframes gentle-pulse {
-        0% { box-shadow: 0 0 0 0 rgba(100, 149, 237, 0.4); }
-        70% { box-shadow: 0 0 0 15px rgba(100, 149, 237, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(100, 149, 237, 0); }
-    }
-    
-    /* Chat input focus styling */
-    .stChatInputContainer:focus-within {
-        border: 3px solid rgba(120, 120, 255, 0.8) !important;
-        box-shadow: 0 6px 20px rgba(100, 149, 237, 0.35) !important;
-        animation: gentle-pulse 2s infinite;
-    }
-    
-    /* Chat message styling */
-    .stChatMessage {
-        border-radius: 18px !important;
-        padding: 12px 18px !important;
-        margin-bottom: 12px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 50, 0.1) !important;
-    }
-    
-    /* User message styling */
-    .stChatMessage[data-testid="chat-message-user"] {
-        background-color: rgba(100, 149, 237, 0.15) !important;
-    }
-    
-    /* Assistant message styling */
-    .stChatMessage[data-testid="chat-message-assistant"] {
-        background-color: rgba(120, 120, 200, 0.1) !important;
-    }
-    
-    /* Tip box styling */
-    .tip-box {
-        background-color: rgba(100, 149, 237, 0.15);
-        border-left: 4px solid rgba(100, 149, 237, 0.7);
-        padding: 10px 15px;
-        border-radius: 0 10px 10px 0;
-        margin: 15px 0;
-        font-size: 0.9rem;
-        color: #D0D0FF;
-    }
-    
-    /* Chat prompt styling - making it more prominent */
-    .chat-prompt-container {
-        background-color: rgba(100, 149, 237, 0.15);
-        border-radius: 20px;
-        padding: 15px;
-        margin: 30px 0 20px 0;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .chat-prompt-text {
-        color: #E0E0FF;
-        font-size: 1.2rem;
-        font-weight: 500;
-        margin: 0;
-    }
-    
-    .chat-prompt-icon {
-        font-size: 1.5rem;
-        margin-right: 10px;
-    }
-    
-    /* Sample questions container */
-    .sample-container {
-        background-color: rgba(100, 149, 237, 0.07);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 25px 0;
-    }
-    
-    .sample-header {
-        color: #D0D0FF;
-        font-size: 1.3rem;
-        font-weight: 500;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-    }
-    
-    .sample-header-icon {
-        margin-right: 10px;
-        font-size: 1.4rem;
+        background-color: #e0e2e6;
     }
     
     /* Footer styling */
-    .footer-text {
-        color: #8888BB;
-        font-size: 0.8rem;
+    .footer {
+        margin-top: 60px;
         text-align: center;
-        margin-top: 20px;
-        padding-top: 10px;
-        border-top: 1px solid rgba(120, 120, 255, 0.1);
+        color: #555;
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     
-    /* Hide the extra empty sections/containers */
-    section.main > div:first-of-type > div:nth-child(1),
-    section.main > div:first-of-type > div:nth-child(7) {
-        display: none !important;
+    .linkedin-icon {
+        margin-left: 10px;
     }
     
-    /* Sidebar styling */
-    .css-1544g2n {
-        padding-top: 2rem;
-    }
-    
-    .sidebar-header {
-        color: #E0E0FF;
+    /* Streamlit elements customization */
+    div[data-testid="stTextInput"] input {
+        height: 50px;
         font-size: 1.1rem;
-        font-weight: 500;
+        padding: 10px 15px;
+        border-radius: 4px;
+    }
+    
+    .stChatMessage {
+        border-radius: 10px;
+        padding: 15px;
         margin-bottom: 15px;
+    }
+    
+    /* Chat message styling */
+    .stChatMessage[data-testid="chat-message-user"] {
+        background-color: #f0f2f6 !important;
+    }
+    
+    .stChatMessage[data-testid="chat-message-assistant"] {
+        background-color: #e6eeff !important;
+    }
+    
+    /* Removing padding for cleaner look */
+    .css-18e3th9 {
+        padding-top: 0;
+    }
+    
+    /* Button styling */
+    .stButton button {
+        border-radius: 4px;
+        padding: 8px 16px;
+        background-color: #0066cc;
+        color: white;
+        border: none;
+    }
+    
+    .stButton button:hover {
+        background-color: #0052a3;
     }
     </style>
     """, unsafe_allow_html=True)
-
-def get_random_tip():
-    """Return a random tip about population models"""
-    tips = [
-        "The basic reproduction number (R₀) indicates how contagious an infectious disease is.",
-        "Reed-Frost models are useful for studying disease spread in small populations.",
-        "Leslie Matrix models help understand age-structured population dynamics.",
-        "The Macdonald model is essential for studying vector-borne diseases like malaria.",
-        "SIR models divide the population into Susceptible, Infected, and Recovered groups.",
-        "Leslie matrices can predict future population sizes based on age-specific fertility and survival rates.",
-        "Vector-borne diseases require understanding both host and vector population dynamics.",
-        "Population thresholds are critical points where disease dynamics change dramatically.",
-    ]
-    return choice(tips)
 
 def run():
     """Main function to run the assistant interface"""
@@ -239,9 +136,20 @@ def run():
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
+    # Title with robot emoji
+    st.markdown("""
+    <div class="title-container">
+        <h1 class="main-title">Population Biology Model Assistant</h1>
+        <span class="robot-icon">🤖</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Subtitle
+    st.markdown('<p class="subtitle">Ask questions about population biology models:</p>', unsafe_allow_html=True)
+    
     # Configure sidebar for the assistant settings
     with st.sidebar:
-        st.markdown('<div class="sidebar-header">Assistant Settings</div>', unsafe_allow_html=True)
+        st.subheader("Assistant Settings")
         
         # API key input (can be stored in environment variables or secrets in production)
         api_key = st.text_input("Anthropic API Key", type="password", 
@@ -342,132 +250,62 @@ When explaining mathematical concepts, be thorough but clear.""",
         st.session_state.example_question = question
         st.experimental_rerun()
     
-    # Display chat interface with only ONE header
-    # Only render the header here if there are NO messages yet
-    if len(st.session_state.messages) == 0:
-        # Single header with DNA icon
-        st.markdown('<div class="main-container">', unsafe_allow_html=True)
-        st.markdown('<div class="custom-header">🤖 Population Biology Model Assistant</div>', unsafe_allow_html=True)
-        st.markdown('<p class="description-text">Ask questions about population biology models, epidemiology concepts, or get help with interpreting model results. This assistant has internet access to provide up-to-date information.</p>', unsafe_allow_html=True)
-        
-        # Add a tip box
-        st.markdown(f'<div class="tip-box">💡 <b>Did you know?</b> {get_random_tip()}</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Main container for question input
+    st.markdown('<p class="question-label">Your Question:</p>', unsafe_allow_html=True)
     
-    # Main chat container
-    main_container = st.container()
-    with main_container:
-        # Display chat messages from history
+    # User input field - larger and more prominent
+    user_question = st.text_input("", 
+                                label_visibility="collapsed", 
+                                placeholder="Type your question about population biology models...",
+                                key="user_question_input")
+    
+    # If user has entered a question
+    if user_question:
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": user_question})
+        
+        # Reset the input field
+        st.session_state.user_question_input = ""
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(user_question)
+        
+        # Display assistant response with a spinner
+        with st.chat_message("assistant"):
+            with st.spinner("Researching population biology concepts..."):
+                # Check if API key is provided
+                if not api_key and "ANTHROPIC_API_KEY" not in st.secrets:
+                    response = "Please enter your Anthropic API key in the sidebar to continue."
+                else:
+                    # Use API key from session or secrets
+                    if not api_key and "ANTHROPIC_API_KEY" in st.secrets:
+                        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+                        
+                    # Generate response
+                    response = get_claude_response(
+                        prompt=user_question,
+                        history=st.session_state.messages[:-1],  # Exclude the current message
+                        system_message=system_message,
+                        model=selected_model,
+                        use_web_search=use_web_search
+                    )
+                
+                # Display response
+                st.markdown(response)
+        
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    # Display chat history if there are messages
+    else:
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
     
-    # If no messages yet, show example questions with clickable behavior
-    if len(st.session_state.messages) == 0:
-        st.markdown('<div class="sample-container">', unsafe_allow_html=True)
-        st.markdown('<div class="sample-header"><span class="sample-header-icon">👋</span> Try asking one of these questions:</div>', unsafe_allow_html=True)
-        
-        example_questions = [
-            "How does a Reed-Frost model work?",
-            "Explain the Leslie Matrix approach for modeling population dynamics",
-            "What factors influence the basic reproduction number (R₀) in vector-borne diseases?",
-            "How does herd immunity affect disease transmission in the SIR model?",
-            "What's the difference between density-dependent and frequency-dependent transmission?"
-        ]
-        
-        # Create clickable example questions
-        for q in example_questions:
-            if st.button(q, key=f"btn_{q}", use_container_width=True, 
-                        help="Click to ask this question",
-                        type="primary"): 
-                # This will be handled by the chat input below
-                st.session_state.example_question = q
-                st.experimental_rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Add a friendly prompt above the chat input
-    st.markdown('<div class="chat-prompt-container">', unsafe_allow_html=True)
-    st.markdown('<span class="chat-prompt-icon">💬</span><p class="chat-prompt-text">Type your question here or click one of the examples above!</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Get example question from state if exists
-    example_q = ""
-    if hasattr(st.session_state, 'example_question') and st.session_state.example_question:
-        example_q = st.session_state.example_question
-        # Clear it to avoid reusing
-        st.session_state.example_question = ""
-    
-    # Handle user input with enhanced visual cue - BIGGER search bar
-    if prompt := st.chat_input("Ask about population models, disease dynamics, or model interpretation...", key="chat_input"):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Display user message
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        # Display assistant response with a spinner
-        with st.chat_message("assistant"):
-            with st.spinner("Researching population biology concepts..."):
-                # Check if API key is provided
-                if not api_key and "ANTHROPIC_API_KEY" not in st.secrets:
-                    response = "Please enter your Anthropic API key in the sidebar to continue."
-                else:
-                    # Use API key from session or secrets
-                    if not api_key and "ANTHROPIC_API_KEY" in st.secrets:
-                        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
-                        
-                    # Generate response
-                    response = get_claude_response(
-                        prompt=prompt,
-                        history=st.session_state.messages[:-1],  # Exclude the current message
-                        system_message=system_message,
-                        model=selected_model,
-                        use_web_search=use_web_search
-                    )
-                
-                # Display response
-                st.markdown(response)
-        
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    # Handle example question if one was selected
-    elif example_q:
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": example_q})
-        
-        # Display user message
-        with st.chat_message("user"):
-            st.markdown(example_q)
-        
-        # Display assistant response with a spinner
-        with st.chat_message("assistant"):
-            with st.spinner("Researching population biology concepts..."):
-                # Check if API key is provided
-                if not api_key and "ANTHROPIC_API_KEY" not in st.secrets:
-                    response = "Please enter your Anthropic API key in the sidebar to continue."
-                else:
-                    # Use API key from session or secrets
-                    if not api_key and "ANTHROPIC_API_KEY" in st.secrets:
-                        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
-                        
-                    # Generate response
-                    response = get_claude_response(
-                        prompt=example_q,
-                        history=st.session_state.messages[:-1],  # Exclude the current message
-                        system_message=system_message,
-                        model=selected_model,
-                        use_web_search=use_web_search
-                    )
-                
-                # Display response
-                st.markdown(response)
-        
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    # Add a subtle footer only if we have messages
-    if len(st.session_state.messages) > 0:
-        st.markdown('<p class="footer-text">This assistant can help explain concepts related to the population biology models in this application.</p>', unsafe_allow_html=True)
+    # Footer with attribution
+    st.markdown("""
+    <div class="footer">
+        Developed by Zach Pella
+    </div>
+    """, unsafe_allow_html=True)
