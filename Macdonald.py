@@ -233,7 +233,7 @@ def run():
     
     
     # Create tabs for different analyses
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Vectorial Capacity", "Sensitivity Analysis", "Host Preference", "Parameter Relationships", "Data Table"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Vectorial Capacity", "Sensitivity Analysis", "Host Preference", "Parameter Relationships", "Vectorial Parameters"])
     
     with tab1:
         st.header("Parameter Impact on Vectorial Capacity")
