@@ -38,7 +38,7 @@ def local_css():
     /* Subtitle styling */
     .subtitle {
         color: #d31010;
-        font-size: 1.9rem;
+        font-size: 1.9rem !important;
         margin: 30px 0;
         text-align: center;
         font-weight: 500;
