@@ -145,7 +145,7 @@ def run():
     
     # Hard-code the API key (since students won't provide one)
     # In production, use a secure method to store this
-    os.environ["ANTHROPIC_API_KEY"] = "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"
+    os.environ["ANTHROPIC_API_KEY"] = "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"
     
     # System message - moved from sidebar to be hidden
     system_message = """You are a specialized assistant for population biology and epidemiological modeling.
