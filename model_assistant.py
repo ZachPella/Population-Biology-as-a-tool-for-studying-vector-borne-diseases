@@ -85,12 +85,18 @@ def local_css():
     
     /* Streamlit elements customization */
     div[data-testid="stTextInput"] input {
-        height: 70px;
-        font-size: 1.5rem;
-        padding: 10px 15px;
-        border-radius: 4px;
+        height: 70px !important;
+        font-size: 1.8rem !important;
+        padding: 15px 20px !important;
+        border-radius: 8px !important;
+        border: 2px solid
     }
-    
+
+    /* Placeholder text styling */
+    ::placeholder {
+        font-size: 1.8rem !important;
+        color: rgba(120, 120, 120, 0.8) !important;
+    }
     .stChatMessage {
         border-radius: 10px;
         padding: 15px;
