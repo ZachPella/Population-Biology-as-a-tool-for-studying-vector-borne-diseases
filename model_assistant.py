@@ -59,27 +59,54 @@ def local_css():
         transform: translateY(-2px) !important;
     }
     
-    /* Chat input styling - ENHANCED */
+    /* Example questions styling */
+    .example-button {
+        background-color: rgba(70, 130, 230, 0.6) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        border: none !important;
+        margin-bottom: 8px !important;
+        text-align: center !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+        padding: 12px 20px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .example-button:hover {
+        background-color: rgba(70, 130, 230, 0.8) !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    /* Chat input styling - ENHANCED & BIGGER */
     .stChatInputContainer {
-        border-radius: 20px !important;
+        border-radius: 25px !important;
         background-color: rgba(100, 149, 237, 0.15) !important;
-        border: 2px solid rgba(120, 120, 255, 0.4) !important;
-        padding: 8px !important;
+        border: 3px solid rgba(120, 120, 255, 0.4) !important;
+        padding: 10px !important;
         margin-top: 25px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 100, 0.1) !important;
+        margin-bottom: 30px !important;
+        box-shadow: 0 6px 15px rgba(0, 0, 100, 0.15) !important;
+    }
+    
+    /* Make the input text larger */
+    .stChatInputContainer input {
+        font-size: 1.1rem !important;
+        padding: 15px 20px !important;
+        height: 60px !important;
     }
     
     /* Pulse animation for the chat input */
     @keyframes gentle-pulse {
         0% { box-shadow: 0 0 0 0 rgba(100, 149, 237, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(100, 149, 237, 0); }
+        70% { box-shadow: 0 0 0 15px rgba(100, 149, 237, 0); }
         100% { box-shadow: 0 0 0 0 rgba(100, 149, 237, 0); }
     }
     
     /* Chat input focus styling */
     .stChatInputContainer:focus-within {
-        border: 2px solid rgba(120, 120, 255, 0.8) !important;
-        box-shadow: 0 4px 20px rgba(100, 149, 237, 0.25) !important;
+        border: 3px solid rgba(120, 120, 255, 0.8) !important;
+        box-shadow: 0 6px 20px rgba(100, 149, 237, 0.35) !important;
         animation: gentle-pulse 2s infinite;
     }
     
@@ -112,59 +139,50 @@ def local_css():
         color: #D0D0FF;
     }
     
-    /* Chat prompt styling - making it stand out */
+    /* Chat prompt styling - making it more prominent */
     .chat-prompt-container {
         background-color: rgba(100, 149, 237, 0.15);
         border-radius: 20px;
         padding: 15px;
-        margin: 25px 0 15px 0;
-        border: 2px dashed rgba(120, 120, 255, 0.3);
+        margin: 30px 0 20px 0;
         text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .chat-prompt-text {
-        color: #D0D0FF;
-        font-size: 1.1rem;
+        color: #E0E0FF;
+        font-size: 1.2rem;
         font-weight: 500;
+        margin: 0;
+    }
+    
+    .chat-prompt-icon {
+        font-size: 1.5rem;
+        margin-right: 10px;
     }
     
     /* Sample questions container */
     .sample-container {
-        background-color: rgba(100, 149, 237, 0.1);
-        border-radius: 12px;
-        padding: 15px 20px;
-        margin: 20px 0;
+        background-color: rgba(100, 149, 237, 0.07);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 25px 0;
     }
     
     .sample-header {
         color: #D0D0FF;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: 500;
         margin-bottom: 15px;
-    }
-    
-    .sample-question {
-        color: #B8B8FF;
-        padding: 8px 12px;
-        margin-bottom: 8px;
-        font-size: 0.95rem;
         display: flex;
         align-items: center;
-        background-color: rgba(100, 149, 237, 0.05);
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.2s ease;
     }
     
-    .sample-question:hover {
-        background-color: rgba(100, 149, 237, 0.15);
-        transform: translateX(5px);
-    }
-    
-    .sample-question:before {
-        content: "💬";
+    .sample-header-icon {
         margin-right: 10px;
-        color: rgba(100, 149, 237, 0.8);
+        font-size: 1.4rem;
     }
     
     /* Footer styling */
@@ -175,6 +193,12 @@ def local_css():
         margin-top: 20px;
         padding-top: 10px;
         border-top: 1px solid rgba(120, 120, 255, 0.1);
+    }
+    
+    /* Hide the extra empty sections/containers */
+    section.main > div:first-of-type > div:nth-child(1),
+    section.main > div:first-of-type > div:nth-child(7) {
+        display: none !important;
     }
     
     /* Sidebar styling */
@@ -194,11 +218,11 @@ def local_css():
 def get_random_tip():
     """Return a random tip about population models"""
     tips = [
+        "The basic reproduction number (R₀) indicates how contagious an infectious disease is.",
         "Reed-Frost models are useful for studying disease spread in small populations.",
         "Leslie Matrix models help understand age-structured population dynamics.",
         "The Macdonald model is essential for studying vector-borne diseases like malaria.",
         "SIR models divide the population into Susceptible, Infected, and Recovered groups.",
-        "The basic reproduction number (R₀) indicates how contagious an infectious disease is.",
         "Leslie matrices can predict future population sizes based on age-specific fertility and survival rates.",
         "Vector-borne diseases require understanding both host and vector population dynamics.",
         "Population thresholds are critical points where disease dynamics change dramatically.",
@@ -341,7 +365,7 @@ When explaining mathematical concepts, be thorough but clear.""",
     # If no messages yet, show example questions with clickable behavior
     if len(st.session_state.messages) == 0:
         st.markdown('<div class="sample-container">', unsafe_allow_html=True)
-        st.markdown('<div class="sample-header">👋 Try asking one of these questions:</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sample-header"><span class="sample-header-icon">👋</span> Try asking one of these questions:</div>', unsafe_allow_html=True)
         
         example_questions = [
             "How does a Reed-Frost model work?",
@@ -353,7 +377,9 @@ When explaining mathematical concepts, be thorough but clear.""",
         
         # Create clickable example questions
         for q in example_questions:
-            if st.button(q, key=f"btn_{q}", use_container_width=True):
+            if st.button(q, key=f"btn_{q}", use_container_width=True, 
+                        help="Click to ask this question",
+                        type="primary"): 
                 # This will be handled by the chat input below
                 st.session_state.example_question = q
                 st.experimental_rerun()
@@ -362,7 +388,7 @@ When explaining mathematical concepts, be thorough but clear.""",
     
     # Add a friendly prompt above the chat input
     st.markdown('<div class="chat-prompt-container">', unsafe_allow_html=True)
-    st.markdown('<p class="chat-prompt-text">💬 Type your question here or click one of the examples above!</p>', unsafe_allow_html=True)
+    st.markdown('<span class="chat-prompt-icon">💬</span><p class="chat-prompt-text">Type your question here or click one of the examples above!</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Get example question from state if exists
@@ -372,7 +398,7 @@ When explaining mathematical concepts, be thorough but clear.""",
         # Clear it to avoid reusing
         st.session_state.example_question = ""
     
-    # Handle user input with enhanced visual cue
+    # Handle user input with enhanced visual cue - BIGGER search bar
     if prompt := st.chat_input("Ask about population models, disease dynamics, or model interpretation...", key="chat_input"):
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
