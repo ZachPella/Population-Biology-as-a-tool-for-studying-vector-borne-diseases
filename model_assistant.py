@@ -108,15 +108,17 @@ def local_css():
     """, unsafe_allow_html=True)
 
 def get_claude_response(messages):
-    """Get a response from Claude API using the provided API key"""
-    # Create a new client with the API key
-    client = anthropic.Anthropic(
-        api_key="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"
-    )
-    
-    # System prompt for guiding Claude's responses
-    system_prompt = """You are a specialized assistant for population biology and epidemiological modeling.
-            
+    """Get a response from Claude API using the API key from secrets.toml"""
+    try:
+        # Access the API key from secrets.toml
+        api_key = st.secrets["anthropic"]["api_key"]
+        
+        # Create a new client with the API key
+        client = anthropic.Anthropic(api_key=api_key)
+        
+        # System prompt for guiding Claude's responses
+        system_prompt = """You are a specialized assistant for population biology and epidemiological modeling.
+                
 You help students and researchers understand concepts related to:
 - Reed-Frost models
 - Leslie Matrix models
@@ -127,22 +129,23 @@ You help students and researchers understand concepts related to:
 
 Provide educational, accurate responses with relevant equations, explanations, and references. 
 When explaining mathematical concepts, be thorough but clear."""
-    
-    # Prepare messages for API call with system prompt
-    api_messages = [{"role": "system", "content": system_prompt}]
-    
-    # Add the conversation history (up to last 10 messages to stay within context limits)
-    for msg in messages[-10:]:
-        api_messages.append(msg)
-    
-    try:
+        
+        # Prepare messages for API call with system prompt
+        api_messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add the conversation history (up to last 10 messages to stay within context limits)
+        for msg in messages[-10:]:
+            api_messages.append(msg)
+        
         # Make the API call
         response = client.messages.create(
-            model="claude-3-7-sonnet-20250219",  # Use the appropriate model
+            model="claude-3-sonnet-20240229",  # Using a model that should be available
             max_tokens=2000,
             messages=api_messages
         )
         return response.content[0].text
+    except KeyError:
+        return "Error: API key not found in secrets.toml. Please check your .streamlit/secrets.toml file."
     except Exception as e:
         return f"Error connecting to Claude API: {str(e)}\n\nPlease check your API key and connection."
 
