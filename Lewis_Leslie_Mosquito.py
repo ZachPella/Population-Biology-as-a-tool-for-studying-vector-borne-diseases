@@ -825,6 +825,4 @@ def run():
         st.info("This simulation is based on the Leslie-Lewis Matrix model as described in the reading materials. The parameters used match those from Table 24.2 for a theoretical mosquito population.")
 
 if __name__ == "__main__":
-    run()[i+1, i] = egg_survival
-            elif i < egg_stage_duration + larval_stage_duration:
-                leslie_matrix_vis
+    run()
