@@ -41,13 +41,6 @@ def run():
     
     This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model. 
     Adjust the parameters using the sliders and see how they affect the epidemic curve and disease dynamics.
-    # Rest of your code...
-    """)
-    st.markdown("""
-    ### Introduction to the Reed-Frost Model
-    
-    This interactive application simulates the spread of infectious disease using the Reed-Frost chain binomial model. 
-    Adjust the parameters using the sliders and see how they affect the epidemic curve and disease dynamics.
     
     **Definition**: The Reed-Frost model is a discrete-time epidemic model that describes how a disease spreads through a population over distinct time periods or generations. It is a fundamental mathematical tool in epidemiology, representing a simplified framework for understanding disease transmission dynamics.
     
