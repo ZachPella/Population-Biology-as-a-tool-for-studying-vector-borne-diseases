@@ -233,13 +233,6 @@ def run():
         
         # Add assistant response to history
         st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    # Footer with attribution
-    st.markdown("""
-    <div class="footer">
-        Developed by Zach Pella
-    </div>
-    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     run()
